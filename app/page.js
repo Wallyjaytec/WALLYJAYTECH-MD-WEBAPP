@@ -11,7 +11,7 @@ import {
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Using standard img tags to ensure they load from your exact folder structure
+  // Paths starting with "/" automatically look inside the "public" folder in Next.js
   const logoPath = "/assets/images/web_logo.png";
   const heroImagePath = "/assets/images/web_asset1.jpg";
 
@@ -30,7 +30,7 @@ export default function LandingPage() {
             <img 
               src={logoPath} 
               alt="WALLYJAYTECH Logo" 
-              className="w-10 h-10 rounded-xl shadow-[0_0_15px_rgba(255,215,0,0.3)] object-cover"
+              className="w-10 h-10 rounded-xl shadow-[0_0_15px_rgba(255,215,0,0.3)] object-contain"
             />
             <span className="font-black text-xl tracking-tighter">WALLYJAYTECH-MD</span>
           </Link>
@@ -179,7 +179,7 @@ export default function LandingPage() {
                 <img 
                   src={logoPath} 
                   alt="WALLYJAYTECH Logo" 
-                  className="w-8 h-8 rounded-lg object-cover"
+                  className="w-8 h-8 rounded-lg object-contain"
                 />
                 <span className="font-black text-xl tracking-tighter">WALLYJAYTECH</span>
               </div>
