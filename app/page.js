@@ -11,7 +11,6 @@ import {
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Paths starting with "/" automatically look inside the "public" folder in Next.js
   const logoPath = "/assets/images/web_logo.png";
   const heroImagePath = "/assets/images/web_asset1.jpg";
 
@@ -82,18 +81,21 @@ export default function LandingPage() {
             
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-sm font-medium mb-6">
               <Sparkles size={16} className="text-[#FFD700]" />
-              <span>Trusted by 1,000+ users worldwide</span>
+              <span>Advanced WhatsApp Automation</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[1.1]">
               The Ultimate <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-yellow-600">
-                WhatsApp Bot.
+                Multi-Device WhatsApp Bot.
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Manage your bot, toggle features, unlock AI capabilities, and run a full SaaS business. Built for developers, communities, and content creators.
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-4 max-w-2xl mx-auto font-semibold">
+              Meet WALLYJAYTECH-MD — your all-in-one WhatsApp automation solution.
+            </p>
+            <p className="text-md md:text-lg text-gray-500 dark:text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Experience 150+ powerful commands, AI-powered features, smart automation, media tools, and much more. Built for seamless messaging, communities, developers, and everyday productivity.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
@@ -101,7 +103,7 @@ export default function LandingPage() {
                 Get Started Now <ArrowRight size={20} />
               </Link>
               <a href="#how-it-works" className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-gray-800 font-bold px-8 py-4 rounded-xl hover:bg-gray-200 dark:hover:bg-[#1a1a1a] transition-all">
-                <Play size={20} /> See How it Works
+                <Play size={20} /> See How It Works
               </a>
             </div>
           </motion.div>
