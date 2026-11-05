@@ -15,19 +15,34 @@ const GithubIcon = ({ size = 24, className = "" }) => (
     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
   </svg>
 );
+
 const YoutubeIcon = ({ size = 24, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
   </svg>
 );
+
 const TelegramIcon = ({ size = 24, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
   </svg>
 );
+
 const GmailIcon = ({ size = 24, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+  </svg>
+);
+
+const WhatsappIcon = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+);
+
+const TiktokIcon = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
   </svg>
 );
 
@@ -96,7 +111,6 @@ export default function LandingPage() {
     { icon: <Globe size={32} />, title: "Multi-Device", desc: "Seamlessly link multiple devices and manage everything from one dashboard." }
   ];
 
-  // 8 Testimonials
   const testimonials = [
     { text: "WALLYJAYTECH-MD is the best WhatsApp bot! Super fast, full of features, and always reliable.", name: "David Emmanuel", role: "Developer", img: "https://i.pravatar.cc/150?img=11" },
     { text: "The AI features are insane. I use it for my group management and media downloads every single day.", name: "Sarah K.", role: "Community Manager", img: "https://i.pravatar.cc/150?img=5" },
@@ -113,7 +127,6 @@ export default function LandingPage() {
     "Media Downloader (Video, Audio)", "Group Management (Admin Tools)", "Anti-Ban Protection"
   ];
 
-  // Auto-slide effect for features carousel (4 seconds)
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % features.length);
@@ -121,7 +134,6 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [features.length]);
 
-  // Auto-slide effect for testimonials carousel (4 seconds)
   useEffect(() => {
     const timer = setInterval(() => {
       setTestimonialSlide((prev) => (prev + 1) % testimonials.length);
@@ -129,7 +141,6 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [testimonials.length]);
 
-  // Scroll to top button logic
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener("scroll", handleScroll);
@@ -222,7 +233,7 @@ export default function LandingPage() {
           </motion.div>
         </main>
 
-        {/* STATS BANNER (Boxed & Animated) */}
+        {/* STATS BANNER */}
         <section className="py-12 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="p-6 rounded-2xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 shadow-sm hover:border-[#FFD700] transition-colors">
@@ -289,7 +300,6 @@ export default function LandingPage() {
             
             {/* REALISTIC PHONE MOCKUP */}
             <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
-              {/* Header */}
               <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
                   <img src={logoPath} alt="Bot" className="w-full h-full rounded-full object-contain" />
@@ -300,15 +310,12 @@ export default function LandingPage() {
                 </div>
               </div>
               
-              {/* Chat Area */}
               <div className="flex-grow bg-[#E5DDD5] dark:bg-[#0b141a] p-3 overflow-y-auto flex flex-col gap-3">
-                {/* User Message */}
                 <div className="bg-[#DCF8C6] dark:bg-[#005c4b] p-3 rounded-xl rounded-tr-none shadow-sm text-xs self-end max-w-[85%] text-black dark:text-white relative">
                   .menu
                   <span className="text-[8px] text-gray-500 absolute bottom-1 right-2 flex items-center gap-1">12:00 PM <CheckCheck size={10} className="text-blue-500"/></span>
                 </div>
                 
-                {/* Bot Menu Reply */}
                 <div className="bg-white dark:bg-[#202c33] p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] self-start max-w-[95%] text-black dark:text-white font-mono whitespace-pre-wrap leading-tight">
 {`🌀◈── *𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃* ──◈❃🌸❃
 
@@ -338,7 +345,6 @@ export default function LandingPage() {
                 </div>
               </div>
               
-              {/* Input Bar */}
               <div className="bg-[#f0f0f0] dark:bg-[#2a3942] p-2 flex items-center gap-2">
                 <div className="flex-grow bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 flex items-center gap-2 border border-gray-300 dark:border-gray-600">
                   <span className="text-gray-400 text-xs">Type a message...</span>
@@ -489,7 +495,7 @@ export default function LandingPage() {
         </section>
       </div>
 
-      {/* FOOTER */}
+      {/* FOOTER (Colored Icons & All Socials) */}
       <footer id="contact" className="bg-gray-50 dark:bg-[#080808] border-t border-gray-200 dark:border-gray-800 pt-16 pb-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           
@@ -526,9 +532,9 @@ export default function LandingPage() {
                 <ul className="flex flex-col space-y-2 text-sm text-gray-500 dark:text-gray-400">
                   <li><a href="https://github.com/wallyjaytechh" target="_blank" className="hover:text-[#FFD700]">GitHub</a></li>
                   <li><a href="https://youtube.com/@wallyjaytechy" target="_blank" className="hover:text-[#FFD700]">YouTube</a></li>
-                  <li><a href="https://tiktok.com/@wallyjaytechy" target="_blank" className="hover:text-[#FFD700]">TikTok</a></li>
+                  <li><a href="https://tiktok.com/@wallyjaytechs" target="_blank" className="hover:text-[#FFD700]">TikTok</a></li>
                   <li><a href="https://t.me/wallyjaytech" target="_blank" className="hover:text-[#FFD700]">Telegram</a></li>
-                  <li><a href="mailto:wallyjay111@gmail.com" className="hover:text-[#FFD700]">Gmail</a></li>
+                  <li><a href="mailto:wallyjaytech@gmail.com" className="hover:text-[#FFD700]">Gmail</a></li>
                 </ul>
               </div>
             </div>
@@ -536,17 +542,23 @@ export default function LandingPage() {
           
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             
-            <div className="flex gap-4 order-1 md:order-2">
+            <div className="flex flex-wrap justify-center gap-4 order-1 md:order-2">
               <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
                 <GithubIcon size={20} className="text-black dark:text-white" />
+              </a>
+              <a href="https://wa.me/2348144317152" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+                <WhatsappIcon size={20} className="text-[#25D366]" />
               </a>
               <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
                 <YoutubeIcon size={20} className="text-[#FF0000]" />
               </a>
+              <a href="https://tiktok.com/@wallyjaytechs" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+                <TiktokIcon size={20} className="text-black dark:text-white" />
+              </a>
               <a href="https://t.me/wallyjaytech" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
                 <TelegramIcon size={20} className="text-[#0088cc]" />
               </a>
-              <a href="mailto:wallyjay111@gmail.com" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+              <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
                 <GmailIcon size={20} className="text-[#EA4335]" />
               </a>
             </div>
@@ -568,7 +580,7 @@ export default function LandingPage() {
             className="fixed bottom-8 right-8 z-50 p-4 bg-[#FFD700] text-black rounded-full shadow-[0_0_20px_rgba(255,215,0,0.4)] hover:bg-yellow-500 hover:scale-110 transition-all"
           >
             <ArrowUp size={24} />
-          </button>
+          </motion.button>
         )}
       </AnimatePresence>
 
