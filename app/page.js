@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowRight, Shield, Zap, Sparkles, Menu, X, 
-  Play, Bot, Image as ImageIcon, Globe, Star, Quote, 
-  Users, CheckCircle, Download, Settings, ArrowUp, Phone, 
-  MessageSquare, ChevronRight
+  Play, Bot, Image as ImageIcon, Globe, Star, 
+  CheckCircle, Download, Settings, ArrowUp, Camera, Mic, Send, CheckCheck
 } from "lucide-react";
 
-// ORIGINAL SVG ICONS FOR FOOTER
+// --- ORIGINAL SVG BRAND ICONS ---
 const GithubIcon = ({ size = 24, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -32,10 +31,58 @@ const GmailIcon = ({ size = 24, className = "" }) => (
   </svg>
 );
 
+// --- ANIMATED COUNTER COMPONENT ---
+function AnimatedCounter({ end, suffix = "", decimals = 0 }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    let animationFrame;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          const duration = 2000;
+          const startTime = performance.now();
+          
+          const updateCount = (currentTime) => {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / duration, 1);
+            const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            setCount(easeProgress * end);
+
+            if (progress < 1) {
+              animationFrame = requestAnimationFrame(updateCount);
+            }
+          };
+          
+          animationFrame = requestAnimationFrame(updateCount);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    if (ref.current) observer.observe(ref.current);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [end]);
+
+  return (
+    <span ref={ref}>
+      {count.toFixed(decimals)}
+      {suffix}
+    </span>
+  );
+}
+
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [testimonialSlide, setTestimonialSlide] = useState(0);
   const [activeStep, setActiveStep] = useState(null);
+  const [activeFeature, setActiveFeature] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   const logoPath = "/assets/images/web_logo.png";
@@ -49,19 +96,42 @@ export default function LandingPage() {
     { icon: <Globe size={32} />, title: "Multi-Device", desc: "Seamlessly link multiple devices and manage everything from one dashboard." }
   ];
 
-  // Auto-slide effect for features
+  // 8 Testimonials
+  const testimonials = [
+    { text: "WALLYJAYTECH-MD is the best WhatsApp bot! Super fast, full of features, and always reliable.", name: "David Emmanuel", role: "Developer", img: "https://i.pravatar.cc/150?img=11" },
+    { text: "The AI features are insane. I use it for my group management and media downloads every single day.", name: "Sarah K.", role: "Community Manager", img: "https://i.pravatar.cc/150?img=5" },
+    { text: "Best bot ever! The 3000+ commands make everything so much easier.", name: "John D.", role: "Content Creator", img: "https://i.pravatar.cc/150?img=12" },
+    { text: "I've used many WhatsApp bots, but WALLYJAYTECH-MD is on another level. Super stable.", name: "Ahmed M.", role: "Group Admin", img: "https://i.pravatar.cc/150?img=3" },
+    { text: "The UI is amazing and the bot never goes offline. Highly recommended.", name: "Linda O.", role: "Entrepreneur", img: "https://i.pravatar.cc/150?img=9" },
+    { text: "The downloader features are lightning fast. YouTube, TikTok, Instagram — no issues.", name: "Michael T.", role: "Student", img: "https://i.pravatar.cc/150?img=15" },
+    { text: "The dashboard makes it so easy to toggle features on and off. I love it.", name: "Grace E.", role: "Influencer", img: "https://i.pravatar.cc/150?img=20" },
+    { text: "Absolutely fantastic! The AI chatbot feature is scary good.", name: "Peter S.", role: "Tech Enthusiast", img: "https://i.pravatar.cc/150?img=60" }
+  ];
+
+  const phoneFeatures = [
+    "Multi-Device Support", "3000+ Powerful Commands", "AI Features & Smart Replies", 
+    "Media Downloader (Video, Audio)", "Group Management (Admin Tools)", "Anti-Ban Protection"
+  ];
+
+  // Auto-slide effect for features carousel (4 seconds)
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % features.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(timer);
   }, [features.length]);
 
+  // Auto-slide effect for testimonials carousel (4 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTestimonialSlide((prev) => (prev + 1) % testimonials.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [testimonials.length]);
+
   // Scroll to top button logic
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -152,24 +222,35 @@ export default function LandingPage() {
           </motion.div>
         </main>
 
-        {/* STATS BANNER */}
-        <section className="bg-black text-white py-8 border-y border-gray-800">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div><h3 className="text-3xl font-black text-[#FFD700]">100K+</h3><p className="text-sm text-gray-400">Total Users</p></div>
-            <div><h3 className="text-3xl font-black text-[#FFD700]">4.9/5</h3><p className="text-sm text-gray-400">User Rating</p></div>
-            <div><h3 className="text-3xl font-black text-[#FFD700]">3000+</h3><p className="text-sm text-gray-400">Commands</p></div>
-            <div><h3 className="text-3xl font-black text-[#FFD700]">1M+</h3><p className="text-sm text-gray-400">Messages Handled</p></div>
+        {/* STATS BANNER (Boxed & Animated) */}
+        <section className="py-12 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 shadow-sm hover:border-[#FFD700] transition-colors">
+              <h3 className="text-3xl font-black text-[#FFD700]"><AnimatedCounter end={100} suffix="K+" /></h3>
+              <p className="text-sm text-gray-500 mt-1 font-medium">Total Users</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 shadow-sm hover:border-[#FFD700] transition-colors">
+              <h3 className="text-3xl font-black text-[#FFD700]"><AnimatedCounter end={4.9} decimals={1} suffix="/5" /></h3>
+              <p className="text-sm text-gray-500 mt-1 font-medium">User Rating</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 shadow-sm hover:border-[#FFD700] transition-colors">
+              <h3 className="text-3xl font-black text-[#FFD700]"><AnimatedCounter end={3000} suffix="+" /></h3>
+              <p className="text-sm text-gray-500 mt-1 font-medium">Commands</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 shadow-sm hover:border-[#FFD700] transition-colors">
+              <h3 className="text-3xl font-black text-[#FFD700]"><AnimatedCounter end={1} suffix="M+" /></h3>
+              <p className="text-sm text-gray-500 mt-1 font-medium">Messages Handled</p>
+            </div>
           </div>
         </section>
 
-        {/* ABOUT / CREATOR SECTION */}
+        {/* ABOUT SECTION */}
         <section className="py-24 max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="flex justify-center">
              <img src={logoPath} alt="Logo" className="w-64 h-64 rounded-full border-4 border-[#FFD700] object-contain shadow-[0_0_40px_rgba(255,215,0,0.2)] p-4 bg-[#0a0a0a]" />
           </div>
           <div>
-            <div className="inline-block bg-[#FFD700]/10 text-[#FFD700] font-bold px-3 py-1 rounded-full text-xs mb-4">About WALLYJAYTECH-MD</div>
-            <h2 className="text-3xl md:text-5xl font-black mb-6">Creator of WALLYJAYTECH-MD</h2>
+            <h2 className="text-3xl md:text-5xl font-black mb-6">WALLYJAYTECH-MD</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
               WALLYJAYTECH-MD is an advanced Multi-Device WhatsApp Bot designed to make messaging smarter, easier, and more powerful.
             </p>
@@ -184,41 +265,87 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* LIVE CHAT MOCKUP */}
+        {/* FEATURE HIGHLIGHTS & REALISTIC PHONE MOCKUP */}
         <section className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-block bg-[#FFD700]/10 text-[#FFD700] font-bold px-3 py-1 rounded-full text-xs mb-4">Powerful Features</div>
               <h2 className="text-3xl md:text-5xl font-black mb-6">Why Choose WALLYJAYTECH-MD?</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-8">Packed with amazing features to give you the best WhatsApp experience.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  "Multi-Device Support", "3000+ Powerful Commands", "AI Features & Smart Replies",
-                  "Media Downloader (Video, Audio)", "Group Management (Admin Tools)", "Anti-Ban Protection"
-                ].map((f, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-white dark:bg-[#0a0a0a] rounded-xl border border-gray-200 dark:border-gray-800 font-semibold text-sm">
-                    <Star size={16} className="text-[#FFD700]" /> {f}
+                {phoneFeatures.map((f, i) => (
+                  <div 
+                    key={i}
+                    onClick={() => setActiveFeature(i)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer font-semibold text-sm ${
+                      activeFeature === i 
+                        ? 'border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700]' 
+                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]'
+                    }`}
+                  >
+                    <Star size={16} className={activeFeature === i ? "text-[#FFD700]" : "text-gray-400"} /> {f}
                   </div>
                 ))}
               </div>
             </div>
             
-            {/* Fake Phone UI */}
-            <div className="relative mx-auto w-full max-w-[300px] h-[600px] bg-black rounded-[40px] border-8 border-gray-800 shadow-2xl overflow-hidden flex flex-col">
-              <div className="bg-[#075E54] p-4 text-white flex items-center gap-3">
-                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center"><Bot size={20} className="text-[#075E54]"/></div>
-                <div><h4 className="font-bold text-sm">WALLYJAYTECH-MD</h4><p className="text-[10px] opacity-80">Online</p></div>
+            {/* REALISTIC PHONE MOCKUP */}
+            <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
+                  <img src={logoPath} alt="Bot" className="w-full h-full rounded-full object-contain" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">WALLYJAYTECH-MD</h4>
+                  <p className="text-[10px] text-gray-200">Online</p>
+                </div>
               </div>
-              <div className="flex-grow bg-[#E5DDD5] p-4 flex flex-col gap-4">
-                <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-sm self-start max-w-[80%]">
-                  Bot is Active! 3000+ Commands Ready to Help!
-                </div>
-                <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-sm self-end max-w-[80%]">
+              
+              {/* Chat Area */}
+              <div className="flex-grow bg-[#E5DDD5] dark:bg-[#0b141a] p-3 overflow-y-auto flex flex-col gap-3">
+                {/* User Message */}
+                <div className="bg-[#DCF8C6] dark:bg-[#005c4b] p-3 rounded-xl rounded-tr-none shadow-sm text-xs self-end max-w-[85%] text-black dark:text-white relative">
                   .menu
+                  <span className="text-[8px] text-gray-500 absolute bottom-1 right-2 flex items-center gap-1">12:00 PM <CheckCheck size={10} className="text-blue-500"/></span>
                 </div>
-                <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-sm self-start max-w-[80%]">
-                  📌 Welcome to WALLYJAYTECH-MD! Reply 1 for AI, 2 for Downloads...
+                
+                {/* Bot Menu Reply */}
+                <div className="bg-white dark:bg-[#202c33] p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] self-start max-w-[95%] text-black dark:text-white font-mono whitespace-pre-wrap leading-tight">
+{`🌀◈── *𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃* ──◈❃🌸❃
+
+╭──────────●●➤
+┊ ❶ 𝙰𝚒 𝙼𝚎𝚗𝚞
+┊ ❷ 𝙰𝚗𝚒𝚖𝚎 𝙼𝚎𝚗𝚞
+┊ ❸ 𝙳𝚎𝚟𝚎𝚕𝚘𝚙𝚎𝚛 𝙼𝚎𝚗𝚞
+┊ ❹ 𝙳𝚘𝚠𝚗𝚕𝚘𝚊𝚍 𝙼𝚎𝚗𝚞
+┊ ❺ 𝙴𝚙𝚑𝚘𝚝𝚘 𝙼𝚎𝚗𝚞
+┊ ❻ 𝙵𝚞𝚗 𝙼𝚎𝚗𝚞
+┊ ❼ 𝙶𝚊𝚖𝚎𝚜 𝙼𝚎𝚗𝚞
+┊ ❽ 𝙶𝚎𝚗𝚎𝚛𝚊𝚕 𝙼𝚎𝚗𝚞
+┊ ❾ 𝙶𝚒𝚝𝚑𝚞𝚋 𝙼𝚎𝚗𝚞
+┊ ❿ 𝙶𝚛𝚘𝚞𝚙 𝙼𝚎𝚗𝚞
+┊ ⓫ 𝙼𝚒𝚜𝚌 𝙼𝚎𝚗𝚞
+┊ ⓬ 𝙾𝚠𝚗𝚎𝚛 𝙼𝚎𝚗𝚞
+┊ ⓭ 𝙿𝚛𝚎𝚖𝚒𝚞𝚖 𝚜𝚞𝚋 𝙼𝚎𝚗𝚞
+┊ ⓮ 𝚂𝚝𝚒𝚌𝚔𝚎𝚛 𝙼𝚎𝚗𝚞
+┊ ⓯ 𝚃𝚘𝚘𝚕𝚜 𝙼𝚎𝚗𝚞
+╰──────·••─────•────●○
+
+              *© 2025-2026*
+
+╭──────────●●➤
+┊ *𝚆𝙰𝙻𝙻𝚈𝙹𝙰𝚈𝚃𝙴𝙲𝙷-𝙼𝙳*
+╰──────·••─────•────●○`}
                 </div>
+              </div>
+              
+              {/* Input Bar */}
+              <div className="bg-[#f0f0f0] dark:bg-[#2a3942] p-2 flex items-center gap-2">
+                <div className="flex-grow bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 flex items-center gap-2 border border-gray-300 dark:border-gray-600">
+                  <span className="text-gray-400 text-xs">Type a message...</span>
+                </div>
+                <button className="p-2 text-gray-500"><Camera size={20} /></button>
+                <button className="p-2 text-gray-500"><Mic size={20} /></button>
+                <button className="p-2 bg-[#00a884] text-white rounded-full shadow-md"><Send size={18} /></button>
               </div>
             </div>
           </div>
@@ -265,11 +392,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* HOW IT WORKS (TAPPABLE) */}
+        {/* HOW IT WORKS (3 Real Steps) */}
         <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-black mb-4">Get Started in 3 Simple Steps</h2>
+              <h2 className="text-3xl md:text-5xl font-black mb-4">Start in 3 steps.</h2>
+              <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Get your bot up and running in less than 2 minutes.</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -298,34 +426,49 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* TESTIMONIALS */}
-        <section id="testimonials" className="py-24">
+        {/* TESTIMONIALS (8 Slides, Manual & Auto) */}
+        <section id="testimonials" className="py-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
-              <div>
-                <div className="inline-block bg-[#FFD700]/10 text-[#FFD700] font-bold px-3 py-1 rounded-full text-xs mb-4">What Our Users Say</div>
-                <h2 className="text-3xl md:text-5xl font-black">Trusted by Thousands Worldwide</h2>
-                <p className="text-gray-500 mt-2">Join our growing community of satisfied users.</p>
-              </div>
+            <div className="mb-12">
+              <h2 className="text-3xl md:text-5xl font-black">Trusted by Thousands Worldwide</h2>
+              <p className="text-gray-500 mt-2">Join our growing community of satisfied users.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { text: "WALLYJAYTECH-MD is the best WhatsApp bot! Super fast, full of features, and always reliable.", name: "David Emmanuel", role: "Developer", img: "https://i.pravatar.cc/150?img=11" },
-                { text: "The AI features are insane. I use it for my group management and media downloads every single day.", name: "Sarah K.", role: "Community Manager", img: "https://i.pravatar.cc/150?img=5" }
-              ].map((t, i) => (
-                <div key={i} className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800">
-                  <div className="flex gap-1 mb-4 text-[#FFD700]">
-                    <Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" />
-                  </div>
-                  <p className="text-lg font-medium mb-6">"{t.text}"</p>
-                  <div className="flex items-center gap-4">
-                    <img src={t.img} className="w-12 h-12 rounded-full" alt={t.name} />
-                    <div>
-                      <h4 className="font-bold">{t.name}</h4>
-                      <p className="text-xs text-gray-500">{t.role}</p>
+            
+            <div className="relative overflow-hidden py-4">
+              <motion.div 
+                className="flex cursor-grab active:cursor-grabbing"
+                animate={{ x: `-${testimonialSlide * 100}%` }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={(e, { offset }) => {
+                  if (offset.x < -50 && testimonialSlide < testimonials.length - 1) setTestimonialSlide(testimonialSlide + 1);
+                  else if (offset.x > 50 && testimonialSlide > 0) setTestimonialSlide(testimonialSlide - 1);
+                }}
+              >
+                {testimonials.map((t, i) => (
+                  <div key={i} className="min-w-full md:min-w-[50%] px-3">
+                    <div className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 h-full flex flex-col">
+                      <div className="flex gap-1 mb-4 text-[#FFD700]">
+                        <Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" />
+                      </div>
+                      <p className="text-lg font-medium mb-6 flex-grow">"{t.text}"</p>
+                      <div className="flex items-center gap-4 mt-auto">
+                        <img src={t.img} className="w-12 h-12 rounded-full object-cover" alt={t.name} />
+                        <div>
+                          <h4 className="font-bold">{t.name}</h4>
+                          <p className="text-xs text-gray-500">{t.role}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
+              </motion.div>
+            </div>
+            
+            <div className="flex justify-center gap-2 mt-8">
+              {testimonials.map((_, i) => (
+                <button key={i} onClick={() => setTestimonialSlide(i)} className={`w-3 h-3 rounded-full transition-all ${testimonialSlide === i ? 'bg-[#FFD700] w-8' : 'bg-gray-300 dark:bg-gray-700'}`} />
               ))}
             </div>
           </div>
@@ -425,7 +568,7 @@ export default function LandingPage() {
             className="fixed bottom-8 right-8 z-50 p-4 bg-[#FFD700] text-black rounded-full shadow-[0_0_20px_rgba(255,215,0,0.4)] hover:bg-yellow-500 hover:scale-110 transition-all"
           >
             <ArrowUp size={24} />
-          </motion.button>
+          </button>
         )}
       </AnimatePresence>
 
