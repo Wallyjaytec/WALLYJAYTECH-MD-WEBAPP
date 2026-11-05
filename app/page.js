@@ -5,19 +5,42 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowRight, Shield, Zap, Sparkles, Menu, X, 
-  Play, Bot, Image as ImageIcon, Globe, Github, Youtube, Mail, Send
+  Play, Bot, Image as ImageIcon, Globe
 } from "lucide-react";
+
+// ORIGINAL SVG ICONS FOR FOOTER
+const GithubIcon = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+  </svg>
+);
+
+const YoutubeIcon = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+);
+
+const TelegramIcon = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+  </svg>
+);
+
+const GmailIcon = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+  </svg>
+);
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeStep, setActiveStep] = useState(null); // Tracks clicked step
 
   const logoPath = "/assets/images/web_logo.png";
   const heroImagePath = "/assets/images/web_asset1.jpg";
 
-  // Features Data (5 Items)
   const features = [
     { icon: <Zap size={32} />, title: "3000+ Commands", desc: "AI, Downloaders, Games, Moderation, and more. Everything you need in one bot." },
     { icon: <Shield size={32} />, title: "Secure & Private", desc: "Your data is encrypted. Antilink, Antibadword, and full group protection." },
@@ -26,7 +49,6 @@ export default function LandingPage() {
     { icon: <Globe size={32} />, title: "Multi-Device", desc: "Seamlessly link multiple devices and manage everything from one dashboard." }
   ];
 
-  // Auto-slide effect
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % features.length);
@@ -37,7 +59,6 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-black dark:text-white transition-colors duration-300 overflow-x-hidden relative font-sans flex flex-col">
       
-      {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#FFD700] opacity-10 dark:opacity-15 blur-[150px] rounded-full pointer-events-none"></div>
 
       {/* NAVBAR */}
@@ -79,7 +100,6 @@ export default function LandingPage() {
         </AnimatePresence>
       </nav>
 
-      {/* MAIN CONTENT */}
       <div className="flex-grow pt-32 relative z-10">
         
         {/* HERO SECTION */}
@@ -121,40 +141,39 @@ export default function LandingPage() {
           </motion.div>
         </main>
 
-        {/* FEATURES CAROUSEL (Fixed Layout & Text) */}
+        {/* FEATURES CAROUSEL (Fixed sliding logic) */}
         <section id="features" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Everything you need.</h2>
             </div>
 
-            {/* Carousel Container */}
-            <div className="relative flex overflow-hidden py-4">
+            <div className="relative overflow-hidden py-4">
               <motion.div 
-                className="flex gap-6 cursor-grab active:cursor-grabbing"
-                animate={{ x: `calc(-${currentSlide * 100}% - ${currentSlide * 1.5}rem)` }}
+                className="flex cursor-grab active:cursor-grabbing"
+                animate={{ x: `-${currentSlide * 100}%` }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
-                onDragEnd={(e, { offset, velocity }) => {
-                  const swipe = offset.x;
-                  if (swipe < -50 && currentSlide < features.length - 1) setCurrentSlide(currentSlide + 1);
-                  else if (swipe > 50 && currentSlide > 0) setCurrentSlide(currentSlide - 1);
+                onDragEnd={(e, { offset }) => {
+                  if (offset.x < -50 && currentSlide < features.length - 1) setCurrentSlide(currentSlide + 1);
+                  else if (offset.x > 50 && currentSlide > 0) setCurrentSlide(currentSlide - 1);
                 }}
               >
                 {features.map((f, i) => (
-                  <div key={i} className="min-w-[85vw] md:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1rem)] p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] dark:hover:border-[#FFD700] transition-colors group flex flex-col h-full">
-                    <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/10 text-[#FFD700] flex items-center justify-center mb-6 group-hover:bg-[#FFD700] group-hover:text-black transition-all flex-shrink-0">
-                      {f.icon}
+                  <div key={i} className="min-w-full md:min-w-[50%] lg:min-w-[33.333%] px-3">
+                    <div className="p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] dark:hover:border-[#FFD700] transition-colors group h-full flex flex-col">
+                      <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/10 text-[#FFD700] flex items-center justify-center mb-6 group-hover:bg-[#FFD700] group-hover:text-black transition-all flex-shrink-0">
+                        {f.icon}
+                      </div>
+                      <h3 className="font-bold text-2xl mb-3">{f.title}</h3>
+                      <p className="text-gray-500 dark:text-gray-400 leading-relaxed flex-grow">{f.desc}</p>
                     </div>
-                    <h3 className="font-bold text-2xl mb-3">{f.title}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed flex-grow">{f.desc}</p>
                   </div>
                 ))}
               </motion.div>
             </div>
             
-            {/* Dots */}
             <div className="flex justify-center gap-2 mt-8">
               {features.map((_, i) => (
                 <button key={i} onClick={() => setCurrentSlide(i)} className={`w-3 h-3 rounded-full transition-all ${currentSlide === i ? 'bg-[#FFD700] w-8' : 'bg-gray-300 dark:bg-gray-700'}`} />
@@ -163,7 +182,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* HOW IT WORKS (Professional 3-Column Layout) */}
+        {/* HOW IT WORKS (Tappable/Hoverable Steps) */}
         <section id="how-it-works" className="py-24">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
@@ -177,14 +196,19 @@ export default function LandingPage() {
                 { step: "02", title: "Connect Bot", desc: "Scan the QR code or use a pairing code to link your WhatsApp instantly." },
                 { step: "03", title: "Manage Features", desc: "Toggle AI, Antilink, and other settings on or off directly from your dashboard." }
               ].map((s, i) => (
-                <div key={i} className="relative p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 transition-all flex flex-col items-center text-center group">
-                  
-                  {/* Step Number Background */}
-                  <div className="text-6xl font-black text-gray-100 dark:text-[#151515] mb-4 group-hover:text-[#FFD700]/20 transition-colors">
+                <div 
+                  key={i} 
+                  onClick={() => setActiveStep(i)}
+                  className={`relative p-8 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center text-center cursor-pointer group ${
+                    activeStep === i 
+                      ? 'border-[#FFD700] bg-[#FFD700]/5 shadow-[0_0_30px_rgba(255,215,0,0.15)] scale-105' 
+                      : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] hover:border-[#FFD700]/50'
+                  }`}
+                >
+                  <div className={`text-6xl font-black mb-4 transition-colors ${activeStep === i ? 'text-[#FFD700]' : 'text-gray-100 dark:text-[#151515] group-hover:text-[#FFD700]/30'}`}>
                     {s.step}
                   </div>
-                  
-                  <h3 className="text-xl font-bold mb-3 text-[#FFD700]">{s.title}</h3>
+                  <h3 className={`text-xl font-bold mb-3 transition-colors ${activeStep === i ? 'text-[#FFD700]' : 'text-black dark:text-white'}`}>{s.title}</h3>
                   <p className="text-gray-500 dark:text-gray-400 leading-relaxed">{s.desc}</p>
                 </div>
               ))}
@@ -193,13 +217,12 @@ export default function LandingPage() {
         </section>
       </div>
 
-      {/* FOOTER (Colored Icons) */}
+      {/* FOOTER (Original SVG Icons & Colors) */}
       <footer id="contact" className="bg-gray-50 dark:bg-[#080808] border-t border-gray-200 dark:border-gray-800 pt-16 pb-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-start gap-12 mb-12">
             
-            {/* Footer Logo */}
             <div className="flex flex-col gap-2 max-w-xs">
               <div className="flex items-center gap-3">
                 <img src={logoPath} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
@@ -208,7 +231,6 @@ export default function LandingPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Empowering your WhatsApp experience with next-gen automation.</p>
             </div>
 
-            {/* Horizontal Links Container */}
             <div className="flex flex-wrap gap-12 md:gap-20">
               <div>
                 <h4 className="font-bold mb-4">Product</h4>
@@ -240,15 +262,22 @@ export default function LandingPage() {
             </div>
           </div>
           
-          {/* Social Icons & Copyright */}
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             
-            {/* Colored Social Icons */}
+            {/* BRAND SVG ICONS */}
             <div className="flex gap-4 order-1 md:order-2">
-              <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Github size={18} className="text-black dark:text-white" /></a>
-              <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Youtube size={18} className="text-[#FF0000]" /></a>
-              <a href="https://t.me/wallyjaytech" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Send size={18} className="text-[#0088cc]" /></a>
-              <a href="mailto:wallyjay111@gmail.com" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Mail size={18} className="text-[#EA4335]" /></a>
+              <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+                <GithubIcon size={20} className="text-black dark:text-white" />
+              </a>
+              <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+                <YoutubeIcon size={20} className="text-[#FF0000]" />
+              </a>
+              <a href="https://t.me/wallyjaytech" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+                <TelegramIcon size={20} className="text-[#0088cc]" />
+              </a>
+              <a href="mailto:wallyjay111@gmail.com" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+                <GmailIcon size={20} className="text-[#EA4335]" />
+              </a>
             </div>
 
             <p className="text-sm text-gray-500 dark:text-gray-400 order-2 md:order-1">© 2025-2026 WALLYJAYTECH-MD. All rights reserved.</p>
