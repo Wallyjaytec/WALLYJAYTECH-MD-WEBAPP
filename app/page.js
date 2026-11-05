@@ -121,16 +121,15 @@ export default function LandingPage() {
           </motion.div>
         </main>
 
-        {/* FEATURES CAROUSEL */}
+        {/* FEATURES CAROUSEL (Fixed Layout & Text) */}
         <section id="features" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Everything you need.</h2>
-              <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Swipe or wait to see all the advanced tools we offer.</p>
             </div>
 
             {/* Carousel Container */}
-            <div className="relative flex overflow-hidden">
+            <div className="relative flex overflow-hidden py-4">
               <motion.div 
                 className="flex gap-6 cursor-grab active:cursor-grabbing"
                 animate={{ x: `calc(-${currentSlide * 100}% - ${currentSlide * 1.5}rem)` }}
@@ -144,12 +143,12 @@ export default function LandingPage() {
                 }}
               >
                 {features.map((f, i) => (
-                  <div key={i} className="min-w-full md:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1rem)] p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] dark:hover:border-[#FFD700] transition-colors group">
-                    <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/10 text-[#FFD700] flex items-center justify-center mb-6 group-hover:bg-[#FFD700] group-hover:text-black transition-all">
+                  <div key={i} className="min-w-[85vw] md:min-w-[calc(50%-0.75rem)] lg:min-w-[calc(33.333%-1rem)] p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] dark:hover:border-[#FFD700] transition-colors group flex flex-col h-full">
+                    <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/10 text-[#FFD700] flex items-center justify-center mb-6 group-hover:bg-[#FFD700] group-hover:text-black transition-all flex-shrink-0">
                       {f.icon}
                     </div>
                     <h3 className="font-bold text-2xl mb-3">{f.title}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
+                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed flex-grow">{f.desc}</p>
                   </div>
                 ))}
               </motion.div>
@@ -164,25 +163,29 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* HOW IT WORKS (VERTICAL GRID STYLE) */}
+        {/* HOW IT WORKS (Professional 3-Column Layout) */}
         <section id="how-it-works" className="py-24">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Start in 3 steps.</h2>
+              <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Get your bot up and running in less than 2 minutes.</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
-                { step: "1", title: "Create Account", desc: "Sign up with your email and phone number." },
-                { step: "2", title: "Connect Bot", desc: "Scan the QR code to link your WhatsApp." },
-                { step: "3", title: "Manage Features", desc: "Toggle AI, Antilink, and status settings instantly." }
+                { step: "01", title: "Create Account", desc: "Sign up securely with your email and phone number to access your dashboard." },
+                { step: "02", title: "Connect Bot", desc: "Scan the QR code or use a pairing code to link your WhatsApp instantly." },
+                { step: "03", title: "Manage Features", desc: "Toggle AI, Antilink, and other settings on or off directly from your dashboard." }
               ].map((s, i) => (
-                <div key={i} className="relative p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] dark:hover:border-[#FFD700] transition-colors overflow-hidden group">
-                  <div className="text-7xl font-black text-gray-100 dark:text-[#1a1a1a] absolute -top-2 -right-2 z-0 group-hover:text-[#FFD700]/10 transition-colors">{s.step}</div>
-                  <div className="relative z-10">
-                    <h3 className="text-xl font-bold mb-3 text-[#FFD700]">{s.title}</h3>
-                    <p className="text-gray-500 dark:text-gray-400">{s.desc}</p>
+                <div key={i} className="relative p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 transition-all flex flex-col items-center text-center group">
+                  
+                  {/* Step Number Background */}
+                  <div className="text-6xl font-black text-gray-100 dark:text-[#151515] mb-4 group-hover:text-[#FFD700]/20 transition-colors">
+                    {s.step}
                   </div>
+                  
+                  <h3 className="text-xl font-bold mb-3 text-[#FFD700]">{s.title}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 leading-relaxed">{s.desc}</p>
                 </div>
               ))}
             </div>
@@ -190,7 +193,7 @@ export default function LandingPage() {
         </section>
       </div>
 
-      {/* FOOTER */}
+      {/* FOOTER (Colored Icons) */}
       <footer id="contact" className="bg-gray-50 dark:bg-[#080808] border-t border-gray-200 dark:border-gray-800 pt-16 pb-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           
@@ -239,14 +242,16 @@ export default function LandingPage() {
           
           {/* Social Icons & Copyright */}
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 order-2 md:order-1">© 2025-2026 WALLYJAYTECH-MD. All rights reserved.</p>
             
+            {/* Colored Social Icons */}
             <div className="flex gap-4 order-1 md:order-2">
-              <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:text-[#FFD700] transition-colors"><Github size={18} /></a>
-              <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:text-[#FFD700] transition-colors"><Youtube size={18} /></a>
-              <a href="https://wa.me/2348144317152" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:text-[#FFD700] transition-colors"><Send size={18} /></a>
-              <a href="mailto:wallyjay111@gmail.com" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:text-[#FFD700] transition-colors"><Mail size={18} /></a>
+              <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Github size={18} className="text-black dark:text-white" /></a>
+              <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Youtube size={18} className="text-[#FF0000]" /></a>
+              <a href="https://t.me/wallyjaytech" target="_blank" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Send size={18} className="text-[#0088cc]" /></a>
+              <a href="mailto:wallyjay111@gmail.com" className="p-2 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform"><Mail size={18} className="text-[#EA4335]" /></a>
             </div>
+
+            <p className="text-sm text-gray-500 dark:text-gray-400 order-2 md:order-1">© 2025-2026 WALLYJAYTECH-MD. All rights reserved.</p>
           </div>
 
         </div>
