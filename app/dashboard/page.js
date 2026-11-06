@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bot, Shield, Settings, LogOut, Activity, Zap, CreditCard, 
   LayoutDashboard, Cpu, MessageSquare, ChevronRight, Mail, 
-  User, Lock, Eye, EyeOff, Globe, Phone, X, ChevronDown
+  User, Lock, Eye, EyeOff, Globe, Phone, X, ChevronDown,
+  Users, Download, Power, RefreshCw, Key, Bell
 } from "lucide-react";
 
 // --- SVG GOOGLE ICON ---
@@ -114,9 +115,7 @@ export default function Dashboard() {
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        }
+        options: { emailRedirectTo: `${window.location.origin}/dashboard` }
       });
       
       if (error) { setAuthError(error.message); return; }
@@ -143,146 +142,80 @@ export default function Dashboard() {
   if (loading) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
   // ==========================================
-  // 1. AUTH SCREEN (Sign Up / Login)
+  // 1. AUTH SCREEN
   // ==========================================
   if (!session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#050505] p-4 py-10 font-sans transition-colors duration-300 relative">
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative"
-        >
-          <Link 
-            href="/" 
-            className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
-          >
-            <X size={20} />
-          </Link>
-
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative">
+          <Link href="/" className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"><X size={20} /></Link>
+          
           <div className="flex justify-center mb-4">
-            <img 
-              src="/assets/images/web_logo.png" 
-              alt="Logo" 
-              className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.3)] object-contain bg-black p-2"
-            />
+            <img src="/assets/images/web_logo.png" alt="Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.3)] object-contain bg-black p-2" />
           </div>
           <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">WALLYJAYTECH-MD</h1>
-          <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">
-            {isLogin ? "Login to your dashboard" : "Create your dashboard"}
-          </p>
+          <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">{isLogin ? "Login to your dashboard" : "Create your dashboard"}</p>
           
           {authError && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 text-red-500 text-sm rounded-lg text-center">{authError}</div>}
 
           <form onSubmit={handleAuth} className="space-y-4">
-            
             {!isLogin && (
               <>
                 <div className="flex gap-3">
                   <div className="relative w-1/2">
                     <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                    <input type="text" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} required
-                      className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                    <input type="text" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
                   </div>
                   <div className="relative w-1/2">
                     <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                    <input type="text" placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} required
-                      className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                    <input type="text" placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
                   </div>
                 </div>
-
                 <div className="relative">
                   <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required
-                    className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                  <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
                 </div>
               </>
             )}
 
             <div className="relative">
               <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input 
-                type={isLogin ? "text" : "email"} 
-                placeholder={isLogin ? "Email or Username" : "Email Address"} 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                required
-                className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" 
-              />
+              <input type={isLogin ? "text" : "email"} placeholder={isLogin ? "Email or Username" : "Email Address"} value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
             </div>
 
             {!isLogin && (
               <>
                 <div className="relative">
-                  <select 
-                    value={selectedCountry.name}
-                    onChange={(e) => {
-                      const country = countries.find(c => c.name === e.target.value);
-                      if (country) setSelectedCountry(country);
-                    }}
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer"
-                  >
-                    {countries.map((c, i) => (
-                      <option key={i} value={c.name}>{c.flag} {c.name}</option>
-                    ))}
+                  <select value={selectedCountry.name} onChange={(e) => { const c = countries.find(x => x.name === e.target.value); if(c) setSelectedCountry(c); }} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer">
+                    {countries.map((c, i) => (<option key={i} value={c.name}>{c.flag} {c.name}</option>))}
                   </select>
                   <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={18} />
                 </div>
-
                 <div className="relative flex items-center rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 focus-within:border-[#FFD700] transition-colors">
                   <div className="pl-4 pr-2 text-gray-500 font-medium whitespace-nowrap flex items-center gap-1">
                     <Phone size={18} />
                     {selectedCountry.code && <span className="ml-1">{selectedCountry.code}</span>}
                   </div>
-                  <input type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required
-                    className="w-full p-3 bg-transparent text-black dark:text-white outline-none" />
+                  <input type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required className="w-full p-3 bg-transparent text-black dark:text-white outline-none" />
                 </div>
               </>
             )}
 
             <div className="relative">
               <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="Password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                required
-                className="w-full p-3 pl-10 pr-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" 
-              />
-              <button 
-                type="button" 
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-gray-400 hover:text-[#FFD700]"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full p-3 pl-10 pr-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-gray-400 hover:text-[#FFD700]">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
             </div>
 
             {!isLogin && (
               <div className="relative">
                 <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                <input 
-                  type={showConfirmPassword ? "text" : "password"} 
-                  placeholder="Confirm Password" 
-                  value={confirmPassword} 
-                  onChange={e => setConfirmPassword(e.target.value)} 
-                  required
-                  className="w-full p-3 pl-10 pr-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" 
-                />
-                <button 
-                  type="button" 
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3.5 text-gray-400 hover:text-[#FFD700]"
-                >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full p-3 pl-10 pr-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3.5 text-gray-400 hover:text-[#FFD700]">{showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             )}
 
-            <button type="submit" className="w-full p-4 mt-2 rounded-xl bg-[#FFD700] text-black font-black hover:bg-yellow-500 transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-              {isLogin ? "LOG IN" : "CREATE ACCOUNT"}
-            </button>
+            <button type="submit" className="w-full p-4 mt-2 rounded-xl bg-[#FFD700] text-black font-black hover:bg-yellow-500 transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)]">{isLogin ? "LOG IN" : "CREATE ACCOUNT"}</button>
           </form>
 
           <div className="flex items-center gap-4 my-6">
@@ -297,9 +230,7 @@ export default function Dashboard() {
           </button>
           
           <div className="mt-8 text-center">
-            <button onClick={() => { setIsLogin(!isLogin); setAuthError(""); }} className="text-sm text-gray-500 hover:text-[#FFD700] transition-colors">
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
-            </button>
+            <button onClick={() => { setIsLogin(!isLogin); setAuthError(""); }} className="text-sm text-gray-500 hover:text-[#FFD700] transition-colors">{isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}</button>
           </div>
         </motion.div>
       </div>
@@ -312,6 +243,7 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-white dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans transition-colors duration-300">
       
+      {/* SIDEBAR */}
       <aside className="w-64 bg-gray-50 dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800">
           <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
@@ -321,11 +253,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          <SidebarItem icon={<LayoutDashboard size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <SidebarItem icon={<Cpu size={20}/>} label="Bot Features" active={activeTab === 'features'} onClick={() => setActiveTab('features')} />
-          <SidebarItem icon={<CreditCard size={20}/>} label="Billing" active={activeTab === 'billing'} onClick={() => setActiveTab('billing')} />
-          <SidebarItem icon={<Settings size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <SidebarItem icon={<LayoutDashboard size={20}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <SidebarItem icon={<Bot size={20}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
+          <SidebarItem icon={<Users size={20}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => setActiveTab('groups')} />
+          <SidebarItem icon={<Download size={20}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')} />
+          <SidebarItem icon={<Settings size={20}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => setActiveTab('controls')} />
+          <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+            <SidebarItem icon={<CreditCard size={20}/>} label="Billing" active={activeTab === 'billing'} onClick={() => setActiveTab('billing')} />
+            <SidebarItem icon={<User size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+          </div>
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
@@ -335,13 +272,15 @@ export default function Dashboard() {
         </div>
       </aside>
 
+      {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#FFD700] opacity-5 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="p-6 md:p-10 relative z-10">
+          
           <header className="flex justify-between items-center mb-10">
             <div>
-              <h2 className="text-3xl font-bold capitalize">{activeTab}</h2>
+              <h2 className="text-3xl font-bold capitalize">{activeTab === 'dashboard' ? 'Overview' : activeTab}</h2>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Welcome back, {settings.first_name || session.user.email.split('@')[0]}</p>
             </div>
             <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#111] px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800">
@@ -354,29 +293,78 @@ export default function Dashboard() {
             
             {activeTab === 'dashboard' && (
               <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                   <StatCard title="Current Plan" value={settings.plan_type} icon={<Zap className="text-[#FFD700]"/>} />
-                  <StatCard title="Server Status" value={settings.bot_connected ? "Online" : "Offline"} icon={<Activity className={settings.bot_connected ? "text-green-500" : "text-red-500"}/>} />
-                  <StatCard title="Commands Run" value="0" icon={<MessageSquare className="text-[#FFD700]"/>} />
+                  <StatCard title="Bot Status" value={settings.bot_connected ? "Online" : "Offline"} icon={<Activity className={settings.bot_connected ? "text-green-500" : "text-red-500"}/>} />
+                  <StatCard title="Messages Handled" value="1,420" icon={<MessageSquare className="text-[#FFD700]"/>} />
+                  <StatCard title="Active Groups" value="12" icon={<Users className="text-[#FFD700]"/>} />
                 </div>
 
-                <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-3xl">
-                  <h3 className="text-xl font-bold mb-4">Quick Start</h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-lg">Your bot dashboard is ready. Go to the <b>Bot Features</b> tab to turn on AI, Antilink, and Autostatus.</p>
-                  <button onClick={() => setActiveTab('features')} className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all shadow-[0_0_15px_rgba(255,215,0,0.2)]">
-                    Manage Features
-                  </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-3xl">
+                    <h3 className="text-xl font-bold mb-4">Quick Start</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-lg">Your bot is ready. Use the sidebar to configure AI, Group Management, and Downloaders.</p>
+                    <button onClick={() => setActiveTab('ai')} className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all shadow-[0_0_15px_rgba(255,215,0,0.2)]">
+                      Configure Bot
+                    </button>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-3xl">
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><RefreshCw size={20} className="text-[#FFD700]"/> Quick Actions</h3>
+                    <div className="space-y-3">
+                      <button className="w-full text-left p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors font-semibold flex justify-between items-center">
+                        <span>Restart Bot</span> <Power size={16} className="text-green-500"/>
+                      </button>
+                      <button className="w-full text-left p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors font-semibold flex justify-between items-center">
+                        <span>Re-link WhatsApp</span> <Key size={16} className="text-[#FFD700]"/>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
 
-            {activeTab === 'features' && (
-              <motion.div key="feat" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
+            {activeTab === 'ai' && (
+              <motion.div key="ai" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FeatureToggle title="AI Chat" desc="Auto-reply using GPT/Gemini" isOn={settings.ai_enabled} onToggle={() => toggleFeature('ai_enabled')} />
-                  <FeatureToggle title="Antilink Protection" desc="Delete links in groups" isOn={settings.antilink_enabled} onToggle={() => toggleFeature('antilink_enabled')} />
-                  <FeatureToggle title="Autostatus" desc="Auto-view & react to statuses" isOn={settings.autostatus_enabled} onToggle={() => toggleFeature('autostatus_enabled')} />
-                  <FeatureToggle title="AutoRecord" desc="Show recording while typing" isOn={settings.autorecord_enabled} onToggle={() => toggleFeature('autorecord_enabled')} />
+                  <FeatureToggle title="Enable AI Chat" desc="Allow the bot to reply using GPT/Gemini." isOn={settings.ai_enabled} onToggle={() => toggleFeature('ai_enabled')} />
+                  <FeatureToggle title="Smart Context Memory" desc="The AI remembers previous messages in the chat." isOn={true} onToggle={() => {}} />
+                  <div className="md:col-span-2 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a]">
+                    <h3 className="font-bold text-lg mb-2">Custom AI Persona</h3>
+                    <textarea placeholder="Tell the AI how to act (e.g., You are a helpful assistant for Wally Jay)..." className="w-full h-32 p-3 rounded-xl bg-white dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors"></textarea>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'groups' && (
+              <motion.div key="groups" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FeatureToggle title="Antilink Protection" desc="Delete messages with links from non-admins." isOn={settings.antilink_enabled} onToggle={() => toggleFeature('antilink_enabled')} />
+                  <FeatureToggle title="Antibadword" desc="Delete messages with bad words." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="Welcome Messages" desc="Send a welcome message when new users join." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="Anti-Delete" desc="Reveal deleted messages in the group." isOn={true} onToggle={() => {}} />
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'downloads' && (
+              <motion.div key="downloads" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FeatureToggle title="YouTube Downloader" desc="Allow users to download YouTube videos and audio." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="TikTok Downloader" desc="Allow users to download TikTok videos." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="Instagram Downloader" desc="Allow users to download Instagram reels." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="Spotify Downloader" desc="Allow users to search and download songs." isOn={true} onToggle={() => {}} />
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'controls' && (
+              <motion.div key="controls" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FeatureToggle title="Auto-Read Messages" desc="Mark messages as read automatically." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="Auto-Typing" desc="Show 'typing...' while the bot is processing." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="Auto-Status View" desc="Automatically view and like contacts' statuses." isOn={settings.autostatus_enabled} onToggle={() => toggleFeature('autostatus_enabled')} />
+                  <FeatureToggle title="Auto-Record Voice Notes" desc="Show 'recording audio...' status." isOn={settings.autorecord_enabled} onToggle={() => toggleFeature('autorecord_enabled')} />
                 </div>
               </motion.div>
             )}
@@ -399,6 +387,11 @@ export default function Dashboard() {
                     <div>
                       <label className="text-sm text-gray-500">Email</label>
                       <p className="font-bold text-lg mt-1">{session.user.email}</p>
+                    </div>
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                      <button className="flex items-center gap-2 text-sm font-bold text-[#FFD700] hover:underline">
+                        <Lock size={16}/> Change Password
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -430,9 +423,7 @@ export default function Dashboard() {
 function SidebarItem({ icon, label, active, onClick }) {
   return (
     <button onClick={onClick} className={`flex items-center justify-between w-full p-3 rounded-xl transition-all ${active ? "bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)]" : "hover:bg-gray-200 dark:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"}`}>
-      <div className="flex items-center gap-3">
-        {icon} <span>{label}</span>
-      </div>
+      <div className="flex items-center gap-3">{icon} <span>{label}</span></div>
       {active && <ChevronRight size={16} />}
     </button>
   );
@@ -441,9 +432,7 @@ function SidebarItem({ icon, label, active, onClick }) {
 function StatCard({ title, value, icon }) {
   return (
     <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl flex flex-col hover:border-[#FFD700]/50 transition-colors">
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-3 bg-white dark:bg-black rounded-xl">{icon}</div>
-      </div>
+      <div className="flex justify-between items-start mb-4"><div className="p-3 bg-white dark:bg-black rounded-xl">{icon}</div></div>
       <h3 className="text-gray-500 text-sm font-semibold">{title}</h3>
       <p className="text-3xl font-black mt-1">{value}</p>
     </div>
@@ -458,10 +447,7 @@ function FeatureToggle({ title, desc, isOn, onToggle }) {
           <h3 className={`font-bold text-lg ${isOn ? 'text-[#FFD700]' : 'text-black dark:text-white'}`}>{title}</h3>
           <p className="text-sm text-gray-500 mt-1">{desc}</p>
         </div>
-        <button 
-          onClick={onToggle}
-          className={`w-14 h-8 rounded-full p-1 transition-colors flex ${isOn ? 'bg-[#FFD700] justify-end shadow-[0_0_10px_rgba(255,215,0,0.4)]' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}
-        >
+        <button onClick={onToggle} className={`w-14 h-8 rounded-full p-1 transition-colors flex ${isOn ? 'bg-[#FFD700] justify-end shadow-[0_0_10px_rgba(255,215,0,0.4)]' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}>
           <motion.div layout className="w-6 h-6 rounded-full bg-white dark:bg-black shadow-md" />
         </button>
       </div>
