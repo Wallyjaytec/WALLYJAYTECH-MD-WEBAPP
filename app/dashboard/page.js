@@ -93,18 +93,75 @@ export default function Dashboard() {
     return "Password must contain: " + errors.join(", ");
   };
 
+  // --- SESSION VALIDATION + USER EXISTENCE CHECK ---
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const validateSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setSession(null);
+        setLoading(false);
+        return;
+      }
+
+      // Verify the user still exists in user_settings table
+      const { data: profile } = await supabase
+        .from('user_settings')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      // If profile is missing, the user was deleted by admin → force logout
+      if (!profile) {
+        await supabase.auth.signOut({ scope: 'local' });
+        sessionStorage.clear();
+        localStorage.clear();
+        setSession(null);
+        setLoading(false);
+        window.location.href = '/';
+        return;
+      }
+
       setSession(session);
-      if (session) fetchSettings(session.user.id);
+      fetchSettings(session.user.id);
       setLoading(false);
-    });
+    };
+
+    validateSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) fetchSettings(session.user.id);
+      if (session) {
+        validateSession();
+      } else {
+        setSession(null);
+      }
     });
+
     return () => subscription.unsubscribe();
   }, []);
+
+  // --- POLL EVERY 60s TO DETECT DELETED USERS ---
+  useEffect(() => {
+    if (!session) return;
+
+    const interval = setInterval(async () => {
+      const { data: profile } = await supabase
+        .from('user_settings')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (!profile) {
+        // User deleted mid-session → force logout immediately
+        await supabase.auth.signOut({ scope: 'local' });
+        sessionStorage.clear();
+        localStorage.clear();
+        window.location.href = '/';
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [session]);
 
   const fetchSettings = async (userId) => {
     const { data } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
@@ -173,20 +230,24 @@ export default function Dashboard() {
           throw new Error("❌ This email is already registered. Please log in instead.");
         }
 
-        // Wait for trigger + session
-        await new Promise(r => setTimeout(r, 1500));
-
-        const { error: insertError } = await supabase.from('user_settings').upsert({
+        // Insert profile row
+        const { error: insertError } = await supabase.from('user_settings').insert({
           user_id: data.user.id,
           first_name: firstName,
           last_name: lastName,
           username: username,
           phone: selectedCountry.code + phone,
           country: selectedCountry.name
-        }, { onConflict: 'user_id' });
+        });
 
         if (insertError) {
           console.error("Profile save error:", insertError);
+          if (insertError.message.includes("row-level security")) {
+            throw new Error("Profile save blocked by security policy. Please try again or contact support.");
+          }
+          if (insertError.message.includes("duplicate key")) {
+            throw new Error("❌ This username or phone was just registered by someone else. Please try again.");
+          }
           throw new Error("Account created but profile save failed: " + insertError.message);
         }
 
@@ -406,7 +467,6 @@ export default function Dashboard() {
       {/* DESKTOP SIDEBAR */}
       <aside className="w-72 bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
         
-        {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
@@ -417,7 +477,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* User Info */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-[#111]">
             <div className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-black">
@@ -430,14 +489,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Deploy Button */}
         <div className="p-4">
           <Link href="/deploy" className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] hover:scale-105 transition-all">
             <Bot size={18} /> Deploy New Bot
           </Link>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-4 pb-4 space-y-1 overflow-y-auto">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Main</p>
           <SidebarItem icon={<LayoutDashboard size={18}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
@@ -451,7 +508,6 @@ export default function Dashboard() {
           <SidebarItem icon={<User size={18}/>} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
         </nav>
 
-        {/* Footer */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm">
             <LogOut size={18} /> Logout
@@ -465,7 +521,6 @@ export default function Dashboard() {
 
         <div className="p-4 md:p-8 relative z-10 max-w-7xl mx-auto">
           
-          {/* Header */}
           <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -528,44 +583,14 @@ export default function Dashboard() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <StatCard 
-                    title="Messages Handled" 
-                    value="14,203" 
-                    change="+12%" 
-                    trend="up"
-                    icon={<MessageSquare size={22}/>} 
-                    color="yellow"
-                  />
-                  <StatCard 
-                    title="Active Groups" 
-                    value="32" 
-                    change="+5%" 
-                    trend="up"
-                    icon={<Users size={22}/>} 
-                    color="blue"
-                  />
-                  <StatCard 
-                    title="Commands Used" 
-                    value="3,120" 
-                    change="-2%" 
-                    trend="down"
-                    icon={<Zap size={22}/>} 
-                    color="purple"
-                  />
-                  <StatCard 
-                    title="Server Uptime" 
-                    value="99.9%" 
-                    change="Stable" 
-                    trend="neutral"
-                    icon={<Activity size={22}/>} 
-                    color="green"
-                  />
+                  <StatCard title="Messages Handled" value="14,203" change="+12%" trend="up" icon={<MessageSquare size={22}/>} color="yellow" />
+                  <StatCard title="Active Groups" value="32" change="+5%" trend="up" icon={<Users size={22}/>} color="blue" />
+                  <StatCard title="Commands Used" value="3,120" change="-2%" trend="down" icon={<Zap size={22}/>} color="purple" />
+                  <StatCard title="Server Uptime" value="99.9%" change="Stable" trend="neutral" icon={<Activity size={22}/>} color="green" />
                 </div>
 
                 {/* Charts Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  
-                  {/* Chart */}
                   <div className="lg:col-span-2 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
                     <div className="flex justify-between items-center mb-6">
                       <div>
@@ -578,23 +603,10 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="flex items-end justify-between h-56 gap-3">
-                      {[
-                        { day: 'Mon', val: 40 },
-                        { day: 'Tue', val: 65 },
-                        { day: 'Wed', val: 45 },
-                        { day: 'Thu', val: 85 },
-                        { day: 'Fri', val: 60 },
-                        { day: 'Sat', val: 90 },
-                        { day: 'Sun', val: 75 }
-                      ].map((item, i) => (
+                      {[{ day: 'Mon', val: 40 },{ day: 'Tue', val: 65 },{ day: 'Wed', val: 45 },{ day: 'Thu', val: 85 },{ day: 'Fri', val: 60 },{ day: 'Sat', val: 90 },{ day: 'Sun', val: 75 }].map((item, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-2">
                           <div className="w-full bg-gray-100 dark:bg-[#1a1a1a] rounded-t-lg relative h-full flex items-end overflow-hidden">
-                            <motion.div 
-                              initial={{ height: 0 }} 
-                              animate={{ height: `${item.val}%` }} 
-                              transition={{ duration: 1, delay: i * 0.1 }} 
-                              className="w-full bg-gradient-to-t from-[#FFD700] to-yellow-400 rounded-t-lg"
-                            />
+                            <motion.div initial={{ height: 0 }} animate={{ height: `${item.val}%` }} transition={{ duration: 1, delay: i * 0.1 }} className="w-full bg-gradient-to-t from-[#FFD700] to-yellow-400 rounded-t-lg" />
                           </div>
                           <span className="text-xs text-gray-500 font-medium">{item.day}</span>
                         </div>
@@ -602,7 +614,6 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Activity Feed */}
                   <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="text-lg font-bold">Recent Activity</h3>
