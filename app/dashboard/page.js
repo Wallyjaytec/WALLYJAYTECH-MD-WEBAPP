@@ -10,7 +10,8 @@ import {
   LayoutDashboard, Cpu, MessageSquare, ChevronRight, Mail, 
   User, Lock, Eye, EyeOff, Globe, Phone, X, ChevronDown,
   Users, Download, Power, RefreshCw, Key, Bell, TrendingUp, 
-  ArrowUpRight, ArrowDownRight, Play, Terminal, Menu
+  ArrowUpRight, ArrowDownRight, Play, Terminal, Menu, 
+  CheckCircle, Clock, Send, BarChart3, Star, Crown, Sparkles
 } from "lucide-react";
 
 // --- SVG GOOGLE ICON ---
@@ -59,14 +60,17 @@ export default function Dashboard() {
   const [submitting, setSubmitting] = useState(false);
   
   const [settings, setSettings] = useState({
-    bot_connected: true,
-    ai_enabled: true,
-    antilink_enabled: true,
+    bot_connected: false,
+    ai_enabled: false,
+    antilink_enabled: false,
     autostatus_enabled: false,
     autorecord_enabled: false,
-    plan_type: 'Premium',
-    first_name: 'Wally',
-    last_name: 'Jay'
+    plan_type: 'Free',
+    first_name: '',
+    last_name: '',
+    username: '',
+    phone: '',
+    country: ''
   });
 
   // --- VALIDATION FUNCTIONS ---
@@ -76,13 +80,7 @@ export default function Dashboard() {
   const validatePhone = (number, len) => number.length === len;
 
   const validatePassword = (pass) => {
-    return (
-      pass.length >= 8 &&
-      /[A-Z]/.test(pass) &&
-      /[a-z]/.test(pass) &&
-      /[0-9]/.test(pass) &&
-      /[!@#$%^&*(),.?":{}|<>_\-]/.test(pass)
-    );
+    return pass.length >= 8 && /[A-Z]/.test(pass) && /[a-z]/.test(pass) && /[0-9]/.test(pass) && /[!@#$%^&*(),.?":{}|<>_\-]/.test(pass);
   };
 
   const getPasswordErrorMessage = (pass) => {
@@ -108,19 +106,6 @@ export default function Dashboard() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const shouldPersist = sessionStorage.getItem("remember_me");
-    if (shouldPersist === "false") {
-      const isNewSession = !sessionStorage.getItem("session_active");
-      if (isNewSession) {
-        supabase.auth.signOut();
-        sessionStorage.removeItem("remember_me");
-      } else {
-        sessionStorage.setItem("session_active", "true");
-      }
-    }
-  }, []);
-
   const fetchSettings = async (userId) => {
     const { data } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
     if (data) setSettings(data);
@@ -140,32 +125,17 @@ export default function Dashboard() {
 
   const handleForgotPassword = async () => {
     if (!email) return setAuthError("Please enter your email to reset password.");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/dashboard`,
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/dashboard` });
     if (error) setAuthError(error.message);
-    else setAuthError("Password reset link sent! Check your email.");
+    else setAuthError("✅ Password reset link sent! Check your email.");
   };
 
-  // --- CHECK USERNAME / PHONE / EMAIL AVAILABILITY ---
   const checkAvailability = async () => {
-    // Check username
-    const { data: usernameData, error: usernameErr } = await supabase
-      .from('user_settings')
-      .select('username')
-      .ilike('username', username)
-      .maybeSingle();
-    if (usernameErr) throw new Error("Could not verify username. Please try again.");
+    const { data: usernameData } = await supabase.from('user_settings').select('username').ilike('username', username).maybeSingle();
     if (usernameData) throw new Error("❌ This username is already taken. Please choose another.");
 
-    // Check phone
     const fullPhone = selectedCountry.code + phone;
-    const { data: phoneData, error: phoneErr } = await supabase
-      .from('user_settings')
-      .select('phone')
-      .eq('phone', fullPhone)
-      .maybeSingle();
-    if (phoneErr) throw new Error("Could not verify phone. Please try again.");
+    const { data: phoneData } = await supabase.from('user_settings').select('phone').eq('phone', fullPhone).maybeSingle();
     if (phoneData) throw new Error("❌ This phone number is already registered.");
   };
 
@@ -176,7 +146,6 @@ export default function Dashboard() {
 
     try {
       if (!isLogin) {
-        // Validation
         if (!validateName(firstName)) throw new Error("First name must contain only letters.");
         if (!validateName(lastName)) throw new Error("Last name must contain only letters.");
         if (!validateUsername(username)) throw new Error("Username must be 5+ letters, followed by optional numbers.");
@@ -187,10 +156,8 @@ export default function Dashboard() {
         if (password !== confirmPassword) throw new Error("Passwords do not match.");
         if (!agreedToTerms) throw new Error("You must agree to the Terms of Service and Privacy Policy.");
 
-        // Check availability BEFORE signup
         await checkAvailability();
 
-        // Sign up
         const { data, error } = await supabase.auth.signUp({ 
           email, 
           password, 
@@ -202,25 +169,25 @@ export default function Dashboard() {
         
         if (error) throw new Error(error.message);
         if (!data.user) throw new Error("Signup failed. Please try again.");
-        
-        // Detect silent duplicate (Supabase returns user but no identities = already exists)
         if (data.user.identities && data.user.identities.length === 0) {
           throw new Error("❌ This email is already registered. Please log in instead.");
         }
 
-        // Insert profile data
-        const { error: insertError } = await supabase.from('user_settings').insert([{
+        // Wait for trigger + session
+        await new Promise(r => setTimeout(r, 1500));
+
+        const { error: insertError } = await supabase.from('user_settings').upsert({
           user_id: data.user.id,
           first_name: firstName,
           last_name: lastName,
           username: username,
           phone: selectedCountry.code + phone,
           country: selectedCountry.name
-        }]);
+        }, { onConflict: 'user_id' });
 
         if (insertError) {
-          // Rollback is not possible in free tier — tell user to contact support
-          throw new Error("Account created but profile save failed: " + insertError.message + ". Please contact support.");
+          console.error("Profile save error:", insertError);
+          throw new Error("Account created but profile save failed: " + insertError.message);
         }
 
         setAuthError("✅ Verify your email to activate your account. Check your inbox, then log in.");
@@ -229,11 +196,8 @@ export default function Dashboard() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(error.message);
         
-        if (rememberMe) {
-          sessionStorage.setItem("remember_me", "true");
-        } else {
-          sessionStorage.setItem("remember_me", "false");
-        }
+        if (rememberMe) sessionStorage.setItem("remember_me", "true");
+        else sessionStorage.setItem("remember_me", "false");
         sessionStorage.setItem("session_active", "true");
       }
     } catch (err) {
@@ -246,7 +210,7 @@ export default function Dashboard() {
   if (loading) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
   // ==========================================
-  // 1. AUTH SCREEN
+  // 1. AUTH SCREEN (Login/Signup)
   // ==========================================
   if (!session) {
     return (
@@ -364,54 +328,74 @@ export default function Dashboard() {
   }
 
   // ==========================================
-  // 2. MAIN DASHBOARD (same as before)
+  // 2. PROFESSIONAL DASHBOARD
   // ==========================================
   return (
-    <div className="flex h-screen bg-white dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans transition-colors duration-300">
+    <div className="flex h-screen bg-gray-50 dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans">
       
-      <div className="md:hidden fixed top-0 left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 z-50 flex justify-between items-center p-4">
+      {/* MOBILE HEADER */}
+      <div className="md:hidden fixed top-0 left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 z-50 flex justify-between items-center px-4 py-3">
         <div className="flex items-center gap-2">
           <img src="/assets/images/web_logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-black p-0.5" />
           <span className="font-black text-lg">WALLYJAY</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-gray-600 dark:text-gray-300">
-          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors">
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
+      {/* MOBILE MENU OVERLAY */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="md:hidden fixed inset-0 bg-black/50 z-40" />
-            <motion.aside initial={{ x: 300 }} animate={{ x: 0 }} exit={{ x: 300 }} transition={{ type: "tween" }} className="md:hidden fixed top-0 right-0 h-full w-72 bg-white dark:bg-[#0a0a0a] z-50 border-l border-gray-200 dark:border-gray-800 flex flex-col">
-              <div className="p-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
+            <motion.aside initial={{ x: 320 }} animate={{ x: 0 }} exit={{ x: 320 }} transition={{ type: "tween" }} className="md:hidden fixed top-0 right-0 h-full w-80 bg-white dark:bg-[#0a0a0a] z-50 border-l border-gray-200 dark:border-gray-800 flex flex-col shadow-2xl">
+              
+              <div className="p-5 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                   <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
                   <div>
-                    <h1 className="font-black text-lg">WALLYJAY</h1>
-                    <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">TECH-MD</p>
+                    <h1 className="font-black text-base">WALLYJAYTECH</h1>
+                    <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">SAAS DASHBOARD</p>
                   </div>
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)}><X size={24} /></button>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"><X size={20} /></button>
               </div>
-              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                <Link href="/deploy" className="flex items-center justify-between w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)] mb-6">
-                  <div className="flex items-center gap-3"><Bot size={20} /> <span>Deploy New Bot</span></div>
-                  <ChevronRight size={16} />
-                </Link>
-                <SidebarItem icon={<LayoutDashboard size={20}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem icon={<Cpu size={20}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => { setActiveTab('ai'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem icon={<Users size={20}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => { setActiveTab('groups'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem icon={<Download size={20}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => { setActiveTab('downloads'); setIsMobileMenuOpen(false); }} />
-                <SidebarItem icon={<Settings size={20}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => { setActiveTab('controls'); setIsMobileMenuOpen(false); }} />
-                <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
-                  <SidebarItem icon={<CreditCard size={20}/>} label="Billing" active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} />
-                  <SidebarItem icon={<User size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} />
+
+              <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-[#111]">
+                  <div className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-black">
+                    {(settings.first_name?.[0] || 'W').toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{settings.first_name || 'User'} {settings.last_name || ''}</p>
+                    <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+                  </div>
+                  <span className="text-[10px] font-bold bg-[#FFD700] text-black px-2 py-1 rounded-full">
+                    {settings.plan_type === 'Premium' ? 'PRO' : 'FREE'}
+                  </span>
                 </div>
+              </div>
+
+              <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Main</p>
+                <MobileNavItem icon={<LayoutDashboard size={18}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }} />
+                <MobileNavItem icon={<Bot size={18}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => { setActiveTab('ai'); setIsMobileMenuOpen(false); }} />
+                <MobileNavItem icon={<Users size={18}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => { setActiveTab('groups'); setIsMobileMenuOpen(false); }} />
+                <MobileNavItem icon={<Download size={18}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => { setActiveTab('downloads'); setIsMobileMenuOpen(false); }} />
+                <MobileNavItem icon={<Settings size={18}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => { setActiveTab('controls'); setIsMobileMenuOpen(false); }} />
+                
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-4">Account</p>
+                <MobileNavItem icon={<CreditCard size={18}/>} label="Billing" active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} />
+                <MobileNavItem icon={<User size={18}/>} label="Profile" active={activeTab === 'profile'} onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} />
               </nav>
-              <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-                <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold">
-                  <LogOut size={20} /> Logout
+
+              <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-2">
+                <Link href="/deploy" className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-lg">
+                  <Bot size={18} /> Deploy New Bot
+                </Link>
+                <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm">
+                  <LogOut size={18} /> Logout
                 </button>
               </div>
             </motion.aside>
@@ -419,161 +403,253 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <aside className="w-64 bg-gray-50 dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
-        <div className="p-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800">
-          <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
-          <div>
-            <h1 className="font-black text-lg">WALLYJAY</h1>
-            <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">TECH-MD</p>
+      {/* DESKTOP SIDEBAR */}
+      <aside className="w-72 bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
+        
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
+            <div>
+              <h1 className="font-black text-base tracking-tight">WALLYJAYTECH</h1>
+              <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">SAAS DASHBOARD</p>
+            </div>
           </div>
         </div>
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <Link href="/deploy" className="flex items-center justify-between w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform mb-6">
-            <div className="flex items-center gap-3"><Bot size={20} /> <span>Deploy New Bot</span></div>
-            <ChevronRight size={16} />
-          </Link>
-          <SidebarItem icon={<LayoutDashboard size={20}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <SidebarItem icon={<Cpu size={20}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
-          <SidebarItem icon={<Users size={20}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => setActiveTab('groups')} />
-          <SidebarItem icon={<Download size={20}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')} />
-          <SidebarItem icon={<Settings size={20}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => setActiveTab('controls')} />
-          <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
-            <SidebarItem icon={<CreditCard size={20}/>} label="Billing" active={activeTab === 'billing'} onClick={() => setActiveTab('billing')} />
-            <SidebarItem icon={<User size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+
+        {/* User Info */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-[#111]">
+            <div className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-black">
+              {(settings.first_name?.[0] || 'W').toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm truncate">{settings.first_name || 'User'} {settings.last_name || ''}</p>
+              <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+            </div>
           </div>
+        </div>
+
+        {/* Deploy Button */}
+        <div className="p-4">
+          <Link href="/deploy" className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] hover:scale-105 transition-all">
+            <Bot size={18} /> Deploy New Bot
+          </Link>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 pb-4 space-y-1 overflow-y-auto">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Main</p>
+          <SidebarItem icon={<LayoutDashboard size={18}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <SidebarItem icon={<Bot size={18}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
+          <SidebarItem icon={<Users size={18}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => setActiveTab('groups')} />
+          <SidebarItem icon={<Download size={18}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')} />
+          <SidebarItem icon={<Settings size={18}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => setActiveTab('controls')} />
+          
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-4">Account</p>
+          <SidebarItem icon={<CreditCard size={18}/>} label="Billing" active={activeTab === 'billing'} onClick={() => setActiveTab('billing')} />
+          <SidebarItem icon={<User size={18}/>} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
         </nav>
+
+        {/* Footer */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold">
-            <LogOut size={20} /> Logout
+          <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm">
+            <LogOut size={18} /> Logout
           </button>
         </div>
       </aside>
 
+      {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto relative pt-16 md:pt-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#FFD700] opacity-5 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="p-6 md:p-10 relative z-10">
-          <header className="flex justify-between items-center mb-10">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#FFD700] opacity-5 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div className="p-4 md:p-8 relative z-10 max-w-7xl mx-auto">
+          
+          {/* Header */}
+          <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
             <div>
-              <h2 className="text-3xl font-bold capitalize">{activeTab === 'dashboard' ? 'Overview' : activeTab}</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Welcome back, {settings.first_name || session.user.email.split('@')[0]}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="text-2xl md:text-3xl font-black capitalize">
+                  {activeTab === 'dashboard' ? 'Overview' : activeTab}
+                </h2>
+                <span className="text-[10px] font-bold bg-[#FFD700]/10 text-[#FFD700] px-2 py-1 rounded-full uppercase">
+                  {settings.plan_type}
+                </span>
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Welcome back, {settings.first_name || session.user.email.split('@')[0]} 👋</p>
             </div>
-            <div className="hidden md:flex items-center gap-3 bg-gray-50 dark:bg-[#111] px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800">
-               <span className={`w-2 h-2 rounded-full ${settings.bot_connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-               <span className="text-xs font-mono">{settings.bot_connected ? 'BOT ONLINE' : 'BOT OFFLINE'}</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-white dark:bg-[#111] px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800 shadow-sm">
+                <span className={`w-2 h-2 rounded-full ${settings.bot_connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                <span className="text-xs font-bold">{settings.bot_connected ? 'BOT ONLINE' : 'BOT OFFLINE'}</span>
+              </div>
+              <button className="p-2 rounded-full bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
+                <Bell size={18} />
+              </button>
             </div>
           </header>
 
           <AnimatePresence mode="wait">
+            
+            {/* OVERVIEW TAB */}
             {activeTab === 'dashboard' && (
-              <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                <div className="relative bg-black dark:bg-[#111] rounded-3xl p-8 mb-8 overflow-hidden border border-gray-800 shadow-2xl">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-20 blur-[80px] rounded-full"></div>
+              <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-6">
+                
+                {/* Welcome Banner */}
+                <div className="relative bg-gradient-to-br from-black via-gray-900 to-black dark:from-[#111] dark:via-[#0a0a0a] dark:to-[#111] rounded-3xl p-6 md:p-8 overflow-hidden border border-gray-800 shadow-2xl">
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD700] opacity-20 blur-[100px] rounded-full"></div>
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#FFD700] opacity-10 blur-[80px] rounded-full"></div>
+                  
                   <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                      <h3 className="text-2xl font-black text-white mb-2">Your Bot is Online 🚀</h3>
-                      <p className="text-gray-400">Everything is running smoothly. You have <b className="text-[#FFD700]">{settings.plan_type}</b> access.</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="text-[#FFD700]" size={20} />
+                        <span className="text-[#FFD700] text-xs font-bold tracking-wider uppercase">System Status</span>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-black text-white mb-2">
+                        {settings.bot_connected ? 'Your Bot is Online 🚀' : 'Bot is Offline'}
+                      </h3>
+                      <p className="text-gray-400 text-sm md:text-base max-w-lg">
+                        {settings.bot_connected 
+                          ? 'Everything is running smoothly. Manage features and monitor activity in real-time.'
+                          : 'Your bot is currently disconnected. Connect it from the Deploy page.'}
+                      </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                      <button className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                      <button className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.4)]">
                         <RefreshCw size={16} /> Restart Bot
                       </button>
-                      <button className="bg-white/10 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/20 transition-all text-sm flex items-center justify-center gap-2 border border-white/20">
+                      <button className="bg-white/10 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/20 transition-all text-sm flex items-center justify-center gap-2 border border-white/20 backdrop-blur-sm">
                         <Terminal size={16} /> View Logs
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-[#FFD700]/50 transition-colors">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="p-3 bg-[#FFD700]/10 text-[#FFD700] rounded-xl"><MessageSquare size={24}/></div>
-                      <span className="text-green-500 text-xs font-bold flex items-center gap-1"><TrendingUp size={14}/> +12%</span>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard 
+                    title="Messages Handled" 
+                    value="14,203" 
+                    change="+12%" 
+                    trend="up"
+                    icon={<MessageSquare size={22}/>} 
+                    color="yellow"
+                  />
+                  <StatCard 
+                    title="Active Groups" 
+                    value="32" 
+                    change="+5%" 
+                    trend="up"
+                    icon={<Users size={22}/>} 
+                    color="blue"
+                  />
+                  <StatCard 
+                    title="Commands Used" 
+                    value="3,120" 
+                    change="-2%" 
+                    trend="down"
+                    icon={<Zap size={22}/>} 
+                    color="purple"
+                  />
+                  <StatCard 
+                    title="Server Uptime" 
+                    value="99.9%" 
+                    change="Stable" 
+                    trend="neutral"
+                    icon={<Activity size={22}/>} 
+                    color="green"
+                  />
+                </div>
+
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  
+                  {/* Chart */}
+                  <div className="lg:col-span-2 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h3 className="text-lg font-bold">Message Activity</h3>
+                        <p className="text-xs text-gray-500">Last 7 days performance</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#FFD700] text-black">Week</button>
+                        <button className="text-xs font-bold px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">Month</button>
+                      </div>
                     </div>
-                    <h3 className="text-gray-500 text-sm font-semibold">Messages Handled</h3>
-                    <p className="text-3xl font-black mt-1">14,203</p>
+                    <div className="flex items-end justify-between h-56 gap-3">
+                      {[
+                        { day: 'Mon', val: 40 },
+                        { day: 'Tue', val: 65 },
+                        { day: 'Wed', val: 45 },
+                        { day: 'Thu', val: 85 },
+                        { day: 'Fri', val: 60 },
+                        { day: 'Sat', val: 90 },
+                        { day: 'Sun', val: 75 }
+                      ].map((item, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                          <div className="w-full bg-gray-100 dark:bg-[#1a1a1a] rounded-t-lg relative h-full flex items-end overflow-hidden">
+                            <motion.div 
+                              initial={{ height: 0 }} 
+                              animate={{ height: `${item.val}%` }} 
+                              transition={{ duration: 1, delay: i * 0.1 }} 
+                              className="w-full bg-gradient-to-t from-[#FFD700] to-yellow-400 rounded-t-lg"
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500 font-medium">{item.day}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-[#FFD700]/50 transition-colors">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl"><Users size={24}/></div>
-                      <span className="text-green-500 text-xs font-bold flex items-center gap-1"><TrendingUp size={14}/> +5%</span>
+
+                  {/* Activity Feed */}
+                  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-bold">Recent Activity</h3>
+                      <button className="text-xs text-[#FFD700] font-bold hover:underline">View All</button>
                     </div>
-                    <h3 className="text-gray-500 text-sm font-semibold">Active Groups</h3>
-                    <p className="text-3xl font-black mt-1">32</p>
-                  </div>
-                  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-[#FFD700]/50 transition-colors">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl"><Zap size={24}/></div>
-                      <span className="text-red-500 text-xs font-bold flex items-center gap-1"><ArrowDownRight size={14}/> -2%</span>
+                    <div className="space-y-3">
+                      <ActivityItem icon={<Bot size={16} className="text-[#FFD700]" />} text="AI replied to John" time="2m" />
+                      <ActivityItem icon={<Download size={16} className="text-blue-500" />} text="Downloaded YouTube Video" time="15m" />
+                      <ActivityItem icon={<Shield size={16} className="text-red-500" />} text="Blocked link in Group" time="1h" />
+                      <ActivityItem icon={<User size={16} className="text-green-500" />} text="New member joined" time="2h" />
+                      <ActivityItem icon={<Star size={16} className="text-purple-500" />} text="Sticker created" time="3h" />
                     </div>
-                    <h3 className="text-gray-500 text-sm font-semibold">Commands Used</h3>
-                    <p className="text-3xl font-black mt-1">3,120</p>
-                  </div>
-                  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-[#FFD700]/50 transition-colors">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="p-3 bg-green-500/10 text-green-500 rounded-xl"><Activity size={24}/></div>
-                    </div>
-                    <h3 className="text-gray-500 text-sm font-semibold">Server Uptime</h3>
-                    <p className="text-3xl font-black mt-1">99.9%</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-3xl">
-                    <h3 className="text-lg font-bold mb-6">Weekly Message Activity</h3>
-                    <div className="flex items-end justify-between h-48 gap-2">
-                      {[40, 70, 45, 90, 65, 85, 100].map((height, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 flex-1">
-                          <div className="w-full bg-gray-100 dark:bg-[#1a1a1a] rounded-t-md relative h-full flex items-end">
-                             <motion.div initial={{ height: 0 }} animate={{ height: `${height}%` }} transition={{ duration: 1, delay: i * 0.1 }} className="w-full bg-[#FFD700] rounded-t-md"></motion.div>
-                          </div>
-                          <span className="text-xs text-gray-400 font-medium">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-3xl">
-                    <h3 className="text-lg font-bold mb-6 flex justify-between items-center">
-                      Recent Activity 
-                      <button className="text-xs text-[#FFD700] font-bold hover:underline">View All</button>
-                    </h3>
-                    <div className="space-y-4">
-                      {[
-                        { action: "AI replied to John", time: "2 mins ago", icon: <Bot size={16} className="text-[#FFD700]" /> },
-                        { action: "Downloaded YouTube Video", time: "15 mins ago", icon: <Download size={16} className="text-blue-500" /> },
-                        { action: "Blocked a link in Group", time: "1 hour ago", icon: <Shield size={16} className="text-red-500" /> },
-                        { action: "New member joined Group", time: "2 hours ago", icon: <User size={16} className="text-green-500" /> },
-                      ].map((log, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-100 dark:border-gray-800/50">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white dark:bg-black rounded-lg shadow-sm">{log.icon}</div>
-                            <span className="text-sm font-semibold">{log.action}</span>
-                          </div>
-                          <span className="text-xs text-gray-500 whitespace-nowrap">{log.time}</span>
-                        </div>
-                      ))}
-                    </div>
+                {/* Quick Actions */}
+                <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
+                  <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <QuickAction icon={<Bot size={22} />} label="AI Chat" onClick={() => setActiveTab('ai')} />
+                    <QuickAction icon={<Users size={22} />} label="Groups" onClick={() => setActiveTab('groups')} />
+                    <QuickAction icon={<Download size={22} />} label="Downloader" onClick={() => setActiveTab('downloads')} />
+                    <QuickAction icon={<Settings size={22} />} label="Controls" onClick={() => setActiveTab('controls')} />
                   </div>
                 </div>
               </motion.div>
             )}
 
+            {/* AI SETTINGS */}
             {activeTab === 'ai' && (
-              <motion.div key="ai" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div key="ai" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FeatureToggle title="Enable AI Chat" desc="Allow the bot to reply using GPT/Gemini." isOn={settings.ai_enabled} onToggle={() => toggleFeature('ai_enabled')} />
                   <FeatureToggle title="Smart Context Memory" desc="The AI remembers previous messages in the chat." isOn={true} onToggle={() => {}} />
-                  <div className="md:col-span-2 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]">
-                    <h3 className="font-bold text-lg mb-2">Custom AI Persona</h3>
-                    <textarea placeholder="Tell the AI how to act..." className="w-full h-32 p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors"></textarea>
-                  </div>
+                </div>
+                <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]">
+                  <h3 className="font-bold text-lg mb-2">Custom AI Persona</h3>
+                  <p className="text-sm text-gray-500 mb-3">Tell the AI how to behave</p>
+                  <textarea placeholder="You are a helpful assistant for WALLYJAYTECH-MD..." className="w-full h-32 p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none resize-none"></textarea>
                 </div>
               </motion.div>
             )}
 
+            {/* GROUPS */}
             {activeTab === 'groups' && (
               <motion.div key="groups" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FeatureToggle title="Antilink Protection" desc="Delete messages with links from non-admins." isOn={settings.antilink_enabled} onToggle={() => toggleFeature('antilink_enabled')} />
                   <FeatureToggle title="Antibadword" desc="Delete messages with bad words." isOn={true} onToggle={() => {}} />
                   <FeatureToggle title="Welcome Messages" desc="Send a welcome message when new users join." isOn={true} onToggle={() => {}} />
@@ -582,9 +658,10 @@ export default function Dashboard() {
               </motion.div>
             )}
 
+            {/* DOWNLOADS */}
             {activeTab === 'downloads' && (
               <motion.div key="downloads" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FeatureToggle title="YouTube Downloader" desc="Allow users to download YouTube videos and audio." isOn={true} onToggle={() => {}} />
                   <FeatureToggle title="TikTok Downloader" desc="Allow users to download TikTok videos." isOn={true} onToggle={() => {}} />
                   <FeatureToggle title="Instagram Downloader" desc="Allow users to download Instagram reels." isOn={true} onToggle={() => {}} />
@@ -593,56 +670,76 @@ export default function Dashboard() {
               </motion.div>
             )}
 
+            {/* CONTROLS */}
             {activeTab === 'controls' && (
               <motion.div key="controls" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FeatureToggle title="Auto-Read Messages" desc="Mark messages as read automatically." isOn={true} onToggle={() => {}} />
-                  <FeatureToggle title="Auto-Typing" desc="Show 'typing...' while the bot is processing." isOn={true} onToggle={() => {}} />
-                  <FeatureToggle title="Auto-Status View" desc="Automatically view and like contacts' statuses." isOn={settings.autostatus_enabled} onToggle={() => toggleFeature('autostatus_enabled')} />
+                  <FeatureToggle title="Auto-Typing" desc="Show 'typing...' while processing." isOn={true} onToggle={() => {}} />
+                  <FeatureToggle title="Auto-Status View" desc="Automatically view and like statuses." isOn={settings.autostatus_enabled} onToggle={() => toggleFeature('autostatus_enabled')} />
                   <FeatureToggle title="Auto-Record Voice Notes" desc="Show 'recording audio...' status." isOn={settings.autorecord_enabled} onToggle={() => toggleFeature('autorecord_enabled')} />
                 </div>
               </motion.div>
             )}
 
+            {/* PROFILE */}
             {activeTab === 'profile' && (
-              <motion.div key="prof" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-3xl max-w-2xl">
-                  <h3 className="text-xl font-bold mb-6">My Profile</h3>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm text-gray-500">First Name</label>
-                        <p className="font-bold text-lg mt-1">{settings.first_name || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Last Name</label>
-                        <p className="font-bold text-lg mt-1">{settings.last_name || 'N/A'}</p>
-                      </div>
+              <motion.div key="prof" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="max-w-2xl">
+                <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-2xl">
+                  <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
+                    <div className="w-20 h-20 rounded-full bg-[#FFD700] flex items-center justify-center text-black font-black text-3xl">
+                      {(settings.first_name?.[0] || 'W').toUpperCase()}
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500">Email</label>
-                      <p className="font-bold text-lg mt-1">{session.user.email}</p>
+                      <h3 className="text-xl font-black">{settings.first_name || 'User'} {settings.last_name || ''}</h3>
+                      <p className="text-sm text-gray-500">{session.user.email}</p>
                     </div>
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-                      <button className="flex items-center gap-2 text-sm font-bold text-[#FFD700] hover:underline">
-                        <Lock size={16}/> Change Password
-                      </button>
-                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ProfileField label="Username" value={settings.username || 'N/A'} />
+                    <ProfileField label="Phone" value={settings.phone || 'N/A'} />
+                    <ProfileField label="Country" value={settings.country || 'N/A'} />
+                    <ProfileField label="Plan" value={settings.plan_type || 'Free'} />
+                  </div>
+                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
+                    <button className="flex items-center gap-2 text-sm font-bold text-[#FFD700] hover:underline">
+                      <Lock size={16}/> Change Password
+                    </button>
                   </div>
                 </div>
               </motion.div>
             )}
 
+            {/* BILLING */}
             {activeTab === 'billing' && (
-              <motion.div key="bill" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="text-center py-20">
-                <CreditCard size={64} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-2xl font-bold mb-2">Upgrade to Premium</h3>
-                <p className="text-gray-500 mb-8">Connect Stripe or Flutterwave here to accept payments.</p>
-                <button className="bg-[#FFD700] text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all">
-                  Setup Payment Gateway
-                </button>
+              <motion.div key="bill" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
+                <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-2xl text-center max-w-2xl mx-auto">
+                  <div className="w-16 h-16 bg-[#FFD700]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Crown className="text-[#FFD700]" size={32} />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">Upgrade to Premium</h3>
+                  <p className="text-gray-500 mb-6">Unlock unlimited commands, priority support, and more.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                    <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800">
+                      <p className="text-xs text-gray-500">Current Plan</p>
+                      <p className="font-bold text-lg">{settings.plan_type}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800">
+                      <p className="text-xs text-gray-500">Billing Cycle</p>
+                      <p className="font-bold text-lg">Monthly</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800">
+                      <p className="text-xs text-gray-500">Next Payment</p>
+                      <p className="font-bold text-lg">—</p>
+                    </div>
+                  </div>
+                  <button className="bg-[#FFD700] text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all shadow-lg">
+                    Upgrade Now
+                  </button>
+                </div>
               </motion.div>
             )}
+
           </AnimatePresence>
         </div>
       </main>
@@ -650,25 +747,91 @@ export default function Dashboard() {
   );
 }
 
+// ==========================================
+// COMPONENTS
+// ==========================================
+
 function SidebarItem({ icon, label, active, onClick }) {
   return (
-    <button onClick={onClick} className={`flex items-center justify-between w-full p-3 rounded-xl transition-all ${active ? "bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)]" : "hover:bg-gray-200 dark:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"}`}>
+    <button onClick={onClick} className={`flex items-center justify-between w-full p-3 rounded-xl transition-all text-sm ${active ? "bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.3)]" : "hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"}`}>
       <div className="flex items-center gap-3">{icon} <span>{label}</span></div>
-      {active && <ChevronRight size={16} />}
+      {active && <ChevronRight size={14} />}
     </button>
+  );
+}
+
+function MobileNavItem({ icon, label, active, onClick }) {
+  return (
+    <button onClick={onClick} className={`flex items-center justify-between w-full p-3 rounded-xl transition-all text-sm ${active ? "bg-[#FFD700] text-black font-bold" : "hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-gray-600 dark:text-gray-400"}`}>
+      <div className="flex items-center gap-3">{icon} <span>{label}</span></div>
+      {active && <ChevronRight size={14} />}
+    </button>
+  );
+}
+
+function StatCard({ title, value, change, trend, icon, color }) {
+  const colorMap = {
+    yellow: 'bg-[#FFD700]/10 text-[#FFD700]',
+    blue: 'bg-blue-500/10 text-blue-500',
+    purple: 'bg-purple-500/10 text-purple-500',
+    green: 'bg-green-500/10 text-green-500'
+  };
+  return (
+    <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl hover:border-[#FFD700]/50 transition-colors">
+      <div className="flex justify-between items-start mb-3">
+        <div className={`p-2.5 rounded-xl ${colorMap[color]}`}>{icon}</div>
+        <span className={`text-xs font-bold flex items-center gap-1 ${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-gray-400'}`}>
+          {trend === 'up' && <TrendingUp size={12}/>}
+          {trend === 'down' && <ArrowDownRight size={12}/>}
+          {change}
+        </span>
+      </div>
+      <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">{title}</h3>
+      <p className="text-2xl font-black mt-1">{value}</p>
+    </div>
+  );
+}
+
+function ActivityItem({ icon, text, time }) {
+  return (
+    <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 dark:bg-[#111] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="p-1.5 bg-white dark:bg-black rounded-lg shadow-sm">{icon}</div>
+        <span className="text-xs font-semibold truncate">{text}</span>
+      </div>
+      <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">{time}</span>
+    </div>
+  );
+}
+
+function QuickAction({ icon, label, onClick }) {
+  return (
+    <button onClick={onClick} className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] hover:bg-[#FFD700]/5 transition-all group">
+      <div className="text-gray-600 dark:text-gray-400 group-hover:text-[#FFD700] transition-colors">{icon}</div>
+      <span className="text-xs font-bold group-hover:text-[#FFD700] transition-colors">{label}</span>
+    </button>
+  );
+}
+
+function ProfileField({ label, value }) {
+  return (
+    <div>
+      <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">{label}</label>
+      <p className="font-bold text-sm mt-1 truncate">{value}</p>
+    </div>
   );
 }
 
 function FeatureToggle({ title, desc, isOn, onToggle }) {
   return (
-    <div className={`p-6 rounded-2xl border transition-all ${isOn ? 'border-[#FFD700] bg-[#FFD700]/5' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]'}`}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className={`font-bold text-lg ${isOn ? 'text-[#FFD700]' : 'text-black dark:text-white'}`}>{title}</h3>
+    <div className={`p-5 rounded-2xl border transition-all ${isOn ? 'border-[#FFD700] bg-[#FFD700]/5' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]'}`}>
+      <div className="flex justify-between items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-bold text-base ${isOn ? 'text-[#FFD700]' : 'text-black dark:text-white'}`}>{title}</h3>
           <p className="text-sm text-gray-500 mt-1">{desc}</p>
         </div>
-        <button onClick={onToggle} className={`w-14 h-8 rounded-full p-1 transition-colors flex ${isOn ? 'bg-[#FFD700] justify-end shadow-[0_0_10px_rgba(255,215,0,0.4)]' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}>
-          <motion.div layout className="w-6 h-6 rounded-full bg-white dark:bg-black shadow-md" />
+        <button onClick={onToggle} className={`w-12 h-7 rounded-full p-1 transition-colors flex flex-shrink-0 ${isOn ? 'bg-[#FFD700] justify-end shadow-[0_0_10px_rgba(255,215,0,0.4)]' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}>
+          <motion.div layout className="w-5 h-5 rounded-full bg-white dark:bg-black shadow-md" />
         </button>
       </div>
     </div>
