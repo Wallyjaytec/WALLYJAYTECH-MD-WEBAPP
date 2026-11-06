@@ -6,7 +6,8 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { 
   ArrowRight, Shield, Zap, Sparkles, Menu, X, 
   Play, Bot, Image as ImageIcon, Globe, Star, 
-  CheckCircle, Download, Settings, ArrowUp, Camera, Mic, Send, CheckCheck
+  CheckCircle, ArrowUp, Camera, Mic, Send, CheckCheck, 
+  UserPlus, QrCode, Settings, Mail
 } from "lucide-react";
 
 // --- ORIGINAL SVG BRAND ICONS ---
@@ -49,7 +50,7 @@ function AnimatedCounter({ end, suffix = "", decimals = 0 }) {
 
   useEffect(() => {
     if (!isInView) {
-      setCount(0); // Reset when out of view
+      setCount(0);
       return;
     }
 
@@ -87,9 +88,11 @@ export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(null);
   const [activeFeature, setActiveFeature] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollTimeout = useRef(null);
 
   const logoPath = "/assets/images/web_logo.png";
   const heroImagePath = "/assets/images/web_asset1.jpg";
+  const aboutImagePath = "/assets/images/about_us.png";
 
   const features = [
     { icon: <Zap size={32} />, title: "3000+ Commands", desc: "AI, Downloaders, Games, Moderation, and more. Everything you need in one bot." },
@@ -129,10 +132,22 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [testimonials.length]);
 
+  // Auto-hide scroll to top after 3 seconds
   useEffect(() => {
-    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
+    const handleScroll = () => {
+      setShowScrollTop(true);
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      
+      scrollTimeout.current = setTimeout(() => {
+        setShowScrollTop(false);
+      }, 3000);
+    };
+    
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    };
   }, []);
 
   return (
@@ -140,7 +155,7 @@ export default function LandingPage() {
       
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#FFD700] opacity-10 dark:opacity-15 blur-[150px] rounded-full pointer-events-none"></div>
 
-      {/* NAVBAR (Solid, thick, opaque) */}
+      {/* NAVBAR */}
       <nav className="fixed w-full top-0 z-50 bg-white dark:bg-[#050505] border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex justify-between items-center py-4 px-4 md:px-12 max-w-7xl mx-auto">
           
@@ -264,48 +279,65 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* FEATURE HIGHLIGHTS & REALISTIC PHONE MOCKUP */}
+        {/* MEET THE CREATOR (NEW) */}
         <section className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-5xl font-black mb-6">Why Choose WALLYJAYTECH-MD?</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {phoneFeatures.map((f, i) => (
-                  <div 
-                    key={i}
-                    onClick={() => setActiveFeature(i)}
-                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer font-semibold text-sm ${
-                      activeFeature === i 
-                        ? 'border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700]' 
-                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] text-gray-600 dark:text-gray-400'
-                    }`}
-                  >
-                    <Star size={16} className={activeFeature === i ? "text-[#FFD700] fill-[#FFD700]" : "text-gray-400"} /> {f}
-                  </div>
-                ))}
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-3xl md:text-5xl font-black mb-12">About Us</h2>
+            <div className="flex flex-col items-center">
+              <img 
+                src={aboutImagePath} 
+                alt="Wally Jay" 
+                className="w-40 h-40 rounded-full object-cover border-4 border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] mb-6"
+              />
+              <h3 className="text-2xl font-bold mb-4">Wally Jay</h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto text-lg">
+                I am a 22-year-old professional web developer with a deep passion for coding. My dream is to make WhatsApp easier and more fun to use through intelligent automation. WALLYJAYTECH-MD was born from this vision — to create a powerful, accessible bot that enhances everyday messaging for communities, creators, and businesses worldwide.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURE HIGHLIGHTS & REALISTIC PHONE MOCKUP */}
+        <section className="py-24 max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl md:text-5xl font-black mb-6">Why Choose WALLYJAYTECH-MD?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {phoneFeatures.map((f, i) => (
+                <div 
+                  key={i}
+                  onClick={() => setActiveFeature(i)}
+                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer font-semibold text-sm ${
+                    activeFeature === i 
+                      ? 'border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700]' 
+                      : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <Star size={16} className={activeFeature === i ? "text-[#FFD700] fill-[#FFD700]" : "text-gray-400"} /> {f}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* REALISTIC PHONE MOCKUP */}
+          <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
+            <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
+                <img src={logoPath} alt="Bot" className="w-full h-full rounded-full object-contain" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm">WALLYJAYTECH-MD</h4>
+                <p className="text-[10px] text-gray-200">Online</p>
               </div>
             </div>
             
-            {/* REALISTIC PHONE MOCKUP */}
-            <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
-              <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
-                  <img src={logoPath} alt="Bot" className="w-full h-full rounded-full object-contain" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm">WALLYJAYTECH-MD</h4>
-                  <p className="text-[10px] text-gray-200">Online</p>
-                </div>
+            <div className="flex-grow bg-[#E5DDD5] dark:bg-[#0b141a] p-3 overflow-y-auto flex flex-col gap-3">
+              <div className="bg-[#DCF8C6] dark:bg-[#005c4b] p-3 rounded-xl rounded-tr-none shadow-sm text-xs self-end max-w-[85%] text-black dark:text-white relative">
+                .menu
+                <span className="text-[8px] text-gray-500 absolute bottom-1 right-2 flex items-center gap-1">12:00 PM <CheckCheck size={10} className="text-blue-500"/></span>
               </div>
               
-              <div className="flex-grow bg-[#E5DDD5] dark:bg-[#0b141a] p-3 overflow-y-auto flex flex-col gap-3">
-                <div className="bg-[#DCF8C6] dark:bg-[#005c4b] p-3 rounded-xl rounded-tr-none shadow-sm text-xs self-end max-w-[85%] text-black dark:text-white relative">
-                  .menu
-                  <span className="text-[8px] text-gray-500 absolute bottom-1 right-2 flex items-center gap-1">12:00 PM <CheckCheck size={10} className="text-blue-500"/></span>
-                </div>
-                
-                <div className="bg-white dark:bg-[#202c33] p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] self-start max-w-[95%] text-black dark:text-white font-mono whitespace-pre-wrap leading-tight">
-{`🌀◈── *𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃* ──◈❃🌸❃
+              <div className="bg-white dark:bg-[#202c33] p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] self-start max-w-[95%] text-black dark:text-white font-mono whitespace-pre-wrap leading-tight">
+{`🌀◈── 𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃 ──◈❃🌸❃
 
 ╭──────────●●➤
 ┊ ❶ 𝙰𝚒 𝙼𝚎𝚗𝚞
@@ -325,28 +357,27 @@ export default function LandingPage() {
 ┊ ⓯ 𝚃𝚘𝚘𝚕𝚜 𝙼𝚎𝚗𝚞
 ╰──────·••─────•────●○
 
-              *© 2025-2026*
+            © 2025-2026
 
 ╭──────────●●➤
-┊ *𝚆𝙰𝙻𝙻𝚈𝙹𝙰𝚈𝚃𝙴𝙲𝙷-𝙼𝙳*
+┊ 𝚆𝙰𝙻𝙻𝚈𝙹𝙰𝚈𝚃𝙴𝙲𝙷-𝙼𝙳
 ╰──────·••─────•────●○`}
-                </div>
               </div>
-              
-              <div className="bg-[#f0f0f0] dark:bg-[#2a3942] p-2 flex items-center gap-2">
-                <div className="flex-grow bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 flex items-center gap-2 border border-gray-300 dark:border-gray-600">
-                  <span className="text-gray-400 text-xs">Type a message...</span>
-                </div>
-                <button className="p-2 text-gray-500"><Camera size={20} /></button>
-                <button className="p-2 text-gray-500"><Mic size={20} /></button>
-                <button className="p-2 bg-[#00a884] text-white rounded-full shadow-md"><Send size={18} /></button>
+            </div>
+            
+            <div className="bg-[#f0f0f0] dark:bg-[#2a3942] p-2 flex items-center gap-2">
+              <div className="flex-grow bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 flex items-center gap-2 border border-gray-300 dark:border-gray-600">
+                <span className="text-gray-400 text-xs">Type a message...</span>
               </div>
+              <button className="p-2 text-gray-500"><Camera size={20} /></button>
+              <button className="p-2 text-gray-500"><Mic size={20} /></button>
+              <button className="p-2 bg-[#00a884] text-white rounded-full shadow-md"><Send size={18} /></button>
             </div>
           </div>
         </section>
 
         {/* FEATURES CAROUSEL */}
-        <section id="features" className="py-24 overflow-hidden">
+        <section id="features" className="py-24 overflow-hidden bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Everything you need.</h2>
@@ -366,7 +397,7 @@ export default function LandingPage() {
               >
                 {features.map((f, i) => (
                   <div key={i} className="min-w-full md:min-w-[50%] lg:min-w-[33.333%] px-3">
-                    <div className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors group h-full flex flex-col">
+                    <div className="p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors group h-full flex flex-col">
                       <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/10 text-[#FFD700] flex items-center justify-center mb-6 group-hover:bg-[#FFD700] group-hover:text-black transition-all flex-shrink-0">
                         {f.icon}
                       </div>
@@ -386,8 +417,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* HOW IT WORKS (Real 3 Steps) */}
-        <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
+        {/* HOW IT WORKS (Professional Steps) */}
+        <section id="how-it-works" className="py-24">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Start in 3 steps.</h2>
@@ -396,9 +427,9 @@ export default function LandingPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
-                { step: "01", icon: <Download size={32} />, title: "Download & Add", desc: "Add WALLYJAYTECH-MD to your WhatsApp." },
-                { step: "02", icon: <Settings size={32} />, title: "Configure", desc: "Set your preferences and customize the bot." },
-                { step: "03", icon: <CheckCircle size={32} />, title: "Enjoy!", desc: "Start using the bot and enjoy amazing features." }
+                { step: "01", icon: <UserPlus size={32} />, title: "Create Account", desc: "Sign up securely with your email and phone number to access your dashboard." },
+                { step: "02", icon: <QrCode size={32} />, title: "Connect Bot", desc: "Scan the QR code or use a pairing code to link your WhatsApp instantly." },
+                { step: "03", icon: <Settings size={32} />, title: "Manage Features", desc: "Toggle AI, Antilink, and other settings on or off directly from your dashboard." }
               ].map((s, i) => (
                 <div 
                   key={i} 
@@ -421,7 +452,7 @@ export default function LandingPage() {
         </section>
 
         {/* TESTIMONIALS (8 Slides) */}
-        <section id="testimonials" className="py-24 overflow-hidden">
+        <section id="testimonials" className="py-24 overflow-hidden bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
               <h2 className="text-3xl md:text-5xl font-black">Trusted by Thousands Worldwide</h2>
@@ -442,7 +473,7 @@ export default function LandingPage() {
               >
                 {testimonials.map((t, i) => (
                   <div key={i} className="min-w-full md:min-w-[50%] px-3">
-                    <div className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 h-full flex flex-col">
+                    <div className="p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 h-full flex flex-col">
                       <div className="flex gap-1 mb-4 text-[#FFD700]">
                         <Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" />
                       </div>
@@ -468,15 +499,35 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* CTA BANNER */}
-        <section className="py-12 px-6">
-          <div className="max-w-7xl mx-auto bg-black rounded-3xl p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 border border-gray-800 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-20 blur-[100px] rounded-full"></div>
-            <div className="relative z-10 text-center md:text-left">
-              <h2 className="text-3xl md:text-4xl font-black text-white mb-2">Ready to experience the best WhatsApp bot?</h2>
-              <p className="text-gray-400 text-lg">Join thousands of users today!</p>
+        {/* NEWSLETTER SUBSCRIPTION */}
+        <section className="py-24 px-6">
+          <div className="max-w-4xl mx-auto bg-black dark:bg-[#111] rounded-3xl p-8 md:p-12 border border-gray-800 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-10 blur-[80px] rounded-full"></div>
+            <div className="relative z-10 w-full md:w-1/2 text-center md:text-left">
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-2">Subscribe to our Newsletter</h2>
+              <p className="text-gray-400 text-sm">Get the latest updates, new features, and bot tips straight to your inbox.</p>
             </div>
-            <Link href="/dashboard" className="relative z-10 bg-[#FFD700] text-black font-black px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)] whitespace-nowrap">
+            <div className="relative z-10 w-full md:w-1/2 flex flex-col sm:flex-row gap-3">
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                className="flex-grow px-5 py-4 rounded-xl bg-[#1a1a1a] border border-gray-700 text-white focus:border-[#FFD700] outline-none"
+              />
+              <button className="bg-[#FFD700] text-black font-bold px-6 py-4 rounded-xl hover:bg-yellow-500 transition-all whitespace-nowrap">
+                Subscribe
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA BANNER */}
+        <section className="pb-12 px-6">
+          <div className="max-w-7xl mx-auto bg-[#FFD700] rounded-3xl p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-[0_0_50px_rgba(255,215,0,0.2)]">
+            <div className="relative z-10 text-center md:text-left">
+              <h2 className="text-3xl md:text-4xl font-black text-black mb-2">Ready to experience the best WhatsApp bot?</h2>
+              <p className="text-black/80 font-medium text-lg">Join thousands of users today and transform your messaging.</p>
+            </div>
+            <Link href="/dashboard" className="relative z-10 bg-black text-white font-black px-8 py-4 rounded-xl hover:bg-gray-800 transition-all whitespace-nowrap shadow-xl">
               Get Started Now
             </Link>
           </div>
@@ -528,37 +579,36 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* LINE SEPARATOR WITH ICONS ON TOP */}
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            
-            <p className="text-sm text-gray-500 dark:text-gray-400 order-2 md:order-1">© 2025-2026 WALLYJAYTECH-MD. All rights reserved.</p>
-            
-            <div className="flex flex-wrap justify-center gap-4 order-1 md:order-2">
-              <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-                <GithubIcon size={20} className="text-black dark:text-white" />
-              </a>
-              <a href="https://wa.me/2348144317152" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-                <WhatsappIcon size={20} className="text-[#25D366]" />
-              </a>
-              <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-                <YoutubeIcon size={20} className="text-[#FF0000]" />
-              </a>
-              <a href="https://tiktok.com/@wallyjaytech" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-                <TiktokIcon size={20} className="text-black dark:text-white" />
-              </a>
-              <a href="https://t.me/wallyjaytechs" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-                <TelegramIcon size={20} className="text-[#0088cc]" />
-              </a>
-              <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-                <GmailIcon size={20} className="text-[#EA4335]" />
-              </a>
-            </div>
+          {/* ICONS ON TOP, THEN LINE, THEN COPYRIGHT */}
+          <div className="flex justify-center gap-4 mb-8">
+            <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+              <GithubIcon size={20} className="text-black dark:text-white" />
+            </a>
+            <a href="https://wa.me/2348144317152" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+              <WhatsappIcon size={20} className="text-[#25D366]" />
+            </a>
+            <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+              <YoutubeIcon size={20} className="text-[#FF0000]" />
+            </a>
+            <a href="https://tiktok.com/@wallyjaytech" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+              <TiktokIcon size={20} className="text-black dark:text-white" />
+            </a>
+            <a href="https://t.me/wallyjaytechs" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+              <TelegramIcon size={20} className="text-[#0088cc]" />
+            </a>
+            <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+              <GmailIcon size={20} className="text-[#EA4335]" />
+            </a>
+          </div>
+
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">© 2025-2026 WALLYJAYTECH-MD. All rights reserved.</p>
           </div>
 
         </div>
       </footer>
 
-      {/* AUTO SCROLL TO TOP BUTTON */}
+      {/* AUTO SCROLL TO TOP BUTTON (Auto-hides after 3 seconds) */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
