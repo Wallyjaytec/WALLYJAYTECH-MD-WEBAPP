@@ -12,7 +12,7 @@ import {
   Plus, Minus, Sun, Moon
 } from "lucide-react";
 
-// --- ORIGINAL SVG BRAND ICONS ---
+// --- SVG BRAND ICONS ---
 const GithubIcon = ({ size = 24, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -66,12 +66,7 @@ function AnimatedCounter({ end, suffix = "", decimals = 0 }) {
     return () => cancelAnimationFrame(animationFrame);
   }, [isInView, end]);
 
-  return (
-    <span ref={ref}>
-      {count.toFixed(decimals)}
-      {suffix}
-    </span>
-  );
+  return <span ref={ref}>{count.toFixed(decimals)}{suffix}</span>;
 }
 
 export default function LandingPage() {
@@ -85,10 +80,22 @@ export default function LandingPage() {
   const [activeFeature, setActiveFeature] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+  const [cardsPerView, setCardsPerView] = useState(1);
   const scrollTimeout = useRef(null);
 
-  // Wait until mounted to render theme-dependent UI (prevents hydration errors)
   useEffect(() => setMounted(true), []);
+
+  // Detect cards per view based on screen width
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setCardsPerView(3);
+      else if (window.innerWidth >= 768) setCardsPerView(2);
+      else setCardsPerView(1);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const logoPath = "/assets/images/web_logo.png";
   const heroImagePath = "/assets/images/web_asset1.jpg";
@@ -137,17 +144,17 @@ export default function LandingPage() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % features.length);
+      setCurrentSlide((prev) => (prev + 1) % Math.max(1, features.length - cardsPerView + 1));
     }, 4000);
     return () => clearInterval(timer);
-  }, [features.length]);
+  }, [features.length, cardsPerView]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTestimonialSlide((prev) => (prev + 1) % testimonials.length);
+      setTestimonialSlide((prev) => (prev + 1) % Math.max(1, testimonials.length - cardsPerView + 1));
     }, 4000);
     return () => clearInterval(timer);
-  }, [testimonials.length]);
+  }, [testimonials.length, cardsPerView]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -191,7 +198,6 @@ export default function LandingPage() {
             <a href="#how-it-works" className="hover:text-[#FFD700] transition-colors">How it Works</a>
             <a href="#testimonials" className="hover:text-[#FFD700] transition-colors">Reviews</a>
             
-            {/* Desktop Theme Toggle */}
             {mounted && (
               <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 text-gray-600 dark:text-gray-300 hover:text-[#FFD700] dark:hover:text-[#FFD700] transition-colors">
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
@@ -203,7 +209,6 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Mobile Controls (Theme + Hamburger) */}
           <div className="flex items-center gap-3 md:hidden">
             {mounted && (
               <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 text-gray-600 dark:text-gray-300">
@@ -411,12 +416,13 @@ export default function LandingPage() {
             <div className="relative overflow-hidden py-4">
               <motion.div 
                 className="flex cursor-grab active:cursor-grabbing"
-                animate={{ x: `-${currentSlide * 100}%` }}
+                animate={{ x: `-${currentSlide * (100 / cardsPerView)}%` }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 onDragEnd={(e, { offset }) => {
-                  if (offset.x < -50 && currentSlide < features.length - 1) setCurrentSlide(currentSlide + 1);
+                  const maxSlide = Math.max(0, features.length - cardsPerView);
+                  if (offset.x < -50 && currentSlide < maxSlide) setCurrentSlide(currentSlide + 1);
                   else if (offset.x > 50 && currentSlide > 0) setCurrentSlide(currentSlide - 1);
                 }}
               >
@@ -435,7 +441,7 @@ export default function LandingPage() {
             </div>
             
             <div className="flex justify-center gap-2 mt-8">
-              {features.map((_, i) => (
+              {features.slice(0, Math.max(1, features.length - cardsPerView + 1)).map((_, i) => (
                 <button key={i} onClick={() => setCurrentSlide(i)} className={`w-3 h-3 rounded-full transition-all ${currentSlide === i ? 'bg-[#FFD700] w-8' : 'bg-gray-300 dark:bg-gray-700'}`} />
               ))}
             </div>
@@ -487,12 +493,13 @@ export default function LandingPage() {
             <div className="relative overflow-hidden py-4">
               <motion.div 
                 className="flex cursor-grab active:cursor-grabbing"
-                animate={{ x: `-${testimonialSlide * 100}%` }}
+                animate={{ x: `-${testimonialSlide * (100 / cardsPerView)}%` }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 onDragEnd={(e, { offset }) => {
-                  if (offset.x < -50 && testimonialSlide < testimonials.length - 1) setTestimonialSlide(testimonialSlide + 1);
+                  const maxSlide = Math.max(0, testimonials.length - cardsPerView);
+                  if (offset.x < -50 && testimonialSlide < maxSlide) setTestimonialSlide(testimonialSlide + 1);
                   else if (offset.x > 50 && testimonialSlide > 0) setTestimonialSlide(testimonialSlide - 1);
                 }}
               >
@@ -517,14 +524,14 @@ export default function LandingPage() {
             </div>
             
             <div className="flex justify-center gap-2 mt-8">
-              {testimonials.map((_, i) => (
+              {testimonials.slice(0, Math.max(1, testimonials.length - cardsPerView + 1)).map((_, i) => (
                 <button key={i} onClick={() => setTestimonialSlide(i)} className={`w-3 h-3 rounded-full transition-all ${testimonialSlide === i ? 'bg-[#FFD700] w-8' : 'bg-gray-300 dark:bg-gray-700'}`} />
               ))}
             </div>
           </div>
         </section>
 
-        {/* ABOUT US / TEAM (Manual Slider) */}
+        {/* ABOUT US / TEAM */}
         <section className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
@@ -548,34 +555,20 @@ export default function LandingPage() {
                   {aboutTeam.map((member, i) => (
                     <div key={i} className="min-w-full px-4 flex justify-center">
                       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-3xl p-8 md:p-12 max-w-2xl w-full flex flex-col items-center text-center shadow-lg">
-                        <img 
-                          src={member.img} 
-                          alt={member.name} 
-                          className="w-32 h-32 rounded-full object-cover border-4 border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] mb-6"
-                        />
+                        <img src={member.img} alt={member.name} className="w-32 h-32 rounded-full object-cover border-4 border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] mb-6" />
                         <h3 className="text-2xl font-bold mb-1">{member.name}</h3>
                         <p className="text-[#FFD700] font-semibold mb-4">{member.role}</p>
-                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                          {member.desc}
-                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{member.desc}</p>
                       </div>
                     </div>
                   ))}
                 </motion.div>
               </div>
               
-              <button 
-                onClick={() => setAboutSlide(prev => Math.max(0, prev - 1))}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 md:-ml-6 p-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-full hover:bg-[#FFD700] hover:text-black hover:border-[#FFD700] transition-all shadow-md z-10"
-                disabled={aboutSlide === 0}
-              >
+              <button onClick={() => setAboutSlide(prev => Math.max(0, prev - 1))} className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 md:-ml-6 p-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-full hover:bg-[#FFD700] hover:text-black hover:border-[#FFD700] transition-all shadow-md z-10" disabled={aboutSlide === 0}>
                 <ChevronLeft size={24} />
               </button>
-              <button 
-                onClick={() => setAboutSlide(prev => Math.min(aboutTeam.length - 1, prev + 1))}
-                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 md:-mr-6 p-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-full hover:bg-[#FFD700] hover:text-black hover:border-[#FFD700] transition-all shadow-md z-10"
-                disabled={aboutSlide === aboutTeam.length - 1}
-              >
+              <button onClick={() => setAboutSlide(prev => Math.min(aboutTeam.length - 1, prev + 1))} className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 md:-mr-6 p-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-full hover:bg-[#FFD700] hover:text-black hover:border-[#FFD700] transition-all shadow-md z-10" disabled={aboutSlide === aboutTeam.length - 1}>
                 <ChevronRight size={24} />
               </button>
             </div>
@@ -588,7 +581,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* NEWSLETTER SUBSCRIPTION */}
+        {/* NEWSLETTER */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto bg-black dark:bg-[#111] rounded-3xl p-8 md:p-12 border border-gray-800 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-10 blur-[80px] rounded-full"></div>
@@ -597,14 +590,8 @@ export default function LandingPage() {
               <p className="text-gray-400 text-sm">Get the latest updates, new features, and bot tips straight to your inbox.</p>
             </div>
             <div className="relative z-10 w-full md:w-1/2 flex flex-col sm:flex-row gap-3">
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
-                className="flex-grow px-5 py-4 rounded-xl bg-[#1a1a1a] border border-gray-700 text-white focus:border-[#FFD700] outline-none"
-              />
-              <button className="bg-[#FFD700] text-black font-bold px-6 py-4 rounded-xl hover:bg-yellow-500 transition-all whitespace-nowrap">
-                Subscribe
-              </button>
+              <input type="email" placeholder="Enter your email" className="flex-grow px-5 py-4 rounded-xl bg-[#1a1a1a] border border-gray-700 text-white focus:border-[#FFD700] outline-none" />
+              <button className="bg-[#FFD700] text-black font-bold px-6 py-4 rounded-xl hover:bg-yellow-500 transition-all whitespace-nowrap">Subscribe</button>
             </div>
           </div>
         </section>
@@ -616,13 +603,11 @@ export default function LandingPage() {
               <h2 className="text-3xl md:text-4xl font-black text-black mb-2">Ready to experience the best WhatsApp bot?</h2>
               <p className="text-black/80 font-medium text-lg">Join thousands of users today and transform your messaging.</p>
             </div>
-            <Link href="/dashboard" className="relative z-10 bg-black text-white font-black px-8 py-4 rounded-xl hover:bg-gray-800 transition-all whitespace-nowrap shadow-xl">
-              Get Started Now
-            </Link>
+            <Link href="/dashboard" className="relative z-10 bg-black text-white font-black px-8 py-4 rounded-xl hover:bg-gray-800 transition-all whitespace-nowrap shadow-xl">Get Started Now</Link>
           </div>
         </section>
 
-        {/* FREQUENTLY ASKED QUESTIONS (FAQ) */}
+        {/* FAQ */}
         <section className="py-24 bg-gray-50 dark:bg-[#080808] border-t border-gray-200 dark:border-gray-800">
           <div className="max-w-3xl mx-auto px-6">
             <div className="text-center mb-12">
@@ -632,14 +617,8 @@ export default function LandingPage() {
 
             <div className="space-y-4">
               {faqs.map((faq, index) => (
-                <div 
-                  key={index} 
-                  className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden transition-all duration-300"
-                >
-                  <button 
-                    onClick={() => toggleFaq(index)}
-                    className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
-                  >
+                <div key={index} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden transition-all duration-300">
+                  <button onClick={() => toggleFaq(index)} className="w-full flex items-center justify-between p-6 text-left focus:outline-none">
                     <span className="font-bold text-lg">{faq.q}</span>
                     <div className={`p-2 rounded-full transition-colors ${openFaq === index ? 'bg-[#FFD700] text-black' : 'bg-gray-100 dark:bg-[#111] text-gray-500'}`}>
                       {openFaq === index ? <Minus size={18} /> : <Plus size={18} />}
@@ -647,12 +626,7 @@ export default function LandingPage() {
                   </button>
                   <AnimatePresence>
                     {openFaq === index && (
-                      <motion.div 
-                        initial={{ height: 0, opacity: 0 }} 
-                        animate={{ height: "auto", opacity: 1 }} 
-                        exit={{ height: 0, opacity: 0 }} 
-                        className="px-6 pb-6 text-gray-600 dark:text-gray-400 leading-relaxed"
-                      >
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-6 pb-6 text-gray-600 dark:text-gray-400 leading-relaxed">
                         {faq.a}
                       </motion.div>
                     )}
@@ -667,9 +641,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer id="contact" className="bg-white dark:bg-[#050505] border-t border-gray-200 dark:border-gray-800 pt-16 pb-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
-          
           <div className="flex flex-col md:flex-row justify-between items-start md:items-start gap-12 mb-12">
-            
             <div className="flex flex-col gap-2 max-w-xs">
               <div className="flex items-center gap-3">
                 <img src={logoPath} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
@@ -687,7 +659,6 @@ export default function LandingPage() {
                   <li><a href="#" className="hover:text-[#FFD700]">Pricing</a></li>
                 </ul>
               </div>
-
               <div id="terms">
                 <h4 className="font-bold mb-4">Legal</h4>
                 <ul className="flex flex-col space-y-2 text-sm text-gray-500 dark:text-gray-400">
@@ -695,7 +666,6 @@ export default function LandingPage() {
                   <li><Link href="/privacy" className="hover:text-[#FFD700]">Privacy Policy</Link></li>
                 </ul>
               </div>
-
               <div>
                 <h4 className="font-bold mb-4">Connect</h4>
                 <ul className="flex flex-col space-y-2 text-sm text-gray-500 dark:text-gray-400">
@@ -710,43 +680,24 @@ export default function LandingPage() {
           </div>
 
           <div className="flex justify-center gap-4 mb-8">
-            <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-              <GithubIcon size={20} className="text-black dark:text-white" />
-            </a>
-            <a href="https://wa.me/2348144317152" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-              <WhatsappIcon size={20} className="text-[#25D366]" />
-            </a>
-            <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-              <YoutubeIcon size={20} className="text-[#FF0000]" />
-            </a>
-            <a href="https://tiktok.com/@wallyjaytech" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-              <TiktokIcon size={20} className="text-black dark:text-white" />
-            </a>
-            <a href="https://t.me/wallyjaytechs" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-              <TelegramIcon size={20} className="text-[#0088cc]" />
-            </a>
-            <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
-              <GmailIcon size={20} className="text-[#EA4335]" />
-            </a>
+            <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><GithubIcon size={20} className="text-black dark:text-white" /></a>
+            <a href="https://wa.me/2348144317152" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><WhatsappIcon size={20} className="text-[#25D366]" /></a>
+            <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><YoutubeIcon size={20} className="text-[#FF0000]" /></a>
+            <a href="https://tiktok.com/@wallyjaytech" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><TiktokIcon size={20} className="text-black dark:text-white" /></a>
+            <a href="https://t.me/wallyjaytechs" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><TelegramIcon size={20} className="text-[#0088cc]" /></a>
+            <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><GmailIcon size={20} className="text-[#EA4335]" /></a>
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">© 2025-2026 WALLYJAYTECH-MD. All rights reserved.</p>
           </div>
-
         </div>
       </footer>
 
-      {/* AUTO SCROLL TO TOP BUTTON */}
+      {/* SCROLL TO TOP */}
       <AnimatePresence>
         {showScrollTop && (
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-8 right-8 z-50 p-4 bg-[#FFD700] text-black rounded-full shadow-[0_0_20px_rgba(255,215,0,0.4)] hover:bg-yellow-500 hover:scale-110 transition-all"
-          >
+          <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-8 right-8 z-50 p-4 bg-[#FFD700] text-black rounded-full shadow-[0_0_20px_rgba(255,215,0,0.4)] hover:bg-yellow-500 hover:scale-110 transition-all">
             <ArrowUp size={24} />
           </motion.button>
         )}
