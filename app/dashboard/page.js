@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bot, Shield, Settings, LogOut, Activity, Zap, CreditCard, 
   LayoutDashboard, Cpu, MessageSquare, ChevronRight, Mail, 
-  User, Lock, Eye, EyeOff, Globe, Phone, X
+  User, Lock, Eye, EyeOff, Globe, Phone, X, ChevronDown
 } from "lucide-react";
 
 // --- SVG GOOGLE ICON ---
@@ -21,6 +21,7 @@ const GoogleIcon = ({ size = 20, className = "" }) => (
 );
 
 const countries = [
+  { name: "Select Country", code: "", flag: "🌍" },
   { name: "Nigeria", code: "+234", flag: "🇳🇬" },
   { name: "United States", code: "+1", flag: "🇺🇸" },
   { name: "United Kingdom", code: "+44", flag: "🇬🇧" },
@@ -33,6 +34,10 @@ const countries = [
   { name: "France", code: "+33", flag: "🇫🇷" },
   { name: "Australia", code: "+61", flag: "🇦🇺" },
   { name: "Brazil", code: "+55", flag: "🇧🇷" },
+  { name: "China", code: "+86", flag: "🇨🇳" },
+  { name: "Japan", code: "+81", flag: "🇯🇵" },
+  { name: "Egypt", code: "+20", flag: "🇪🇬" },
+  { name: "United Arab Emirates", code: "+971", flag: "🇦🇪" },
 ];
 
 export default function Dashboard() {
@@ -49,6 +54,7 @@ export default function Dashboard() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [authError, setAuthError] = useState("");
@@ -100,6 +106,10 @@ export default function Dashboard() {
         setAuthError("Passwords do not match.");
         return;
       }
+      if (!selectedCountry.code) {
+        setAuthError("Please select a country.");
+        return;
+      }
       
       const { data, error } = await supabase.auth.signUp({ email, password });
       
@@ -110,6 +120,7 @@ export default function Dashboard() {
           user_id: data.user.id,
           first_name: firstName,
           last_name: lastName,
+          username: username,
           phone: selectedCountry.code + phone,
           country: selectedCountry.name
         }]);
@@ -117,9 +128,6 @@ export default function Dashboard() {
         setIsLogin(true);
       }
     } else {
-      // Supabase login only supports email by default. 
-      // If user entered a username, we would need to look up their email first. 
-      // For simplicity, we are assuming they enter their email to log in.
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setAuthError(error.message);
     }
@@ -162,18 +170,26 @@ export default function Dashboard() {
           <form onSubmit={handleAuth} className="space-y-4">
             
             {!isLogin && (
-              <div className="flex gap-3">
-                <div className="relative w-1/2">
+              <>
+                <div className="flex gap-3">
+                  <div className="relative w-1/2">
+                    <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <input type="text" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} required
+                      className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                  </div>
+                  <div className="relative w-1/2">
+                    <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <input type="text" placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} required
+                      className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                  </div>
+                </div>
+
+                <div className="relative">
                   <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input type="text" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} required
+                  <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required
                     className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
                 </div>
-                <div className="relative w-1/2">
-                  <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input type="text" placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} required
-                    className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
-                </div>
-              </div>
+              </>
             )}
 
             <div className="relative">
@@ -190,36 +206,30 @@ export default function Dashboard() {
 
             {!isLogin && (
               <>
-                <div className="flex gap-3">
-                  <div className="relative w-1/2">
-                    <Globe className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                    <select 
-                      value={selectedCountry.name}
-                      onChange={(e) => {
-                        const country = countries.find(c => c.name === e.target.value);
-                        if (country) setSelectedCountry(country);
-                      }}
-                      className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer"
-                    >
-                      {countries.map((c, i) => (
-                        <option key={i} value={c.name}>{c.flag} {c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="relative w-1/2">
-                    <input 
-                      type="text" 
-                      value={selectedCountry.code} 
-                      readOnly 
-                      className="w-full p-3 pl-3 rounded-xl bg-gray-200 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 outline-none cursor-not-allowed font-mono text-sm"
-                    />
-                  </div>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-3.5 text-gray-400 z-10 pointer-events-none" size={18} />
+                  <select 
+                    value={selectedCountry.name}
+                    onChange={(e) => {
+                      const country = countries.find(c => c.name === e.target.value);
+                      if (country) setSelectedCountry(country);
+                    }}
+                    className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer"
+                  >
+                    {countries.map((c, i) => (
+                      <option key={i} value={c.name}>{c.flag} {c.name} {c.code ? `(${c.code})` : ""}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={18} />
                 </div>
 
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                <div className="relative flex items-center rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 focus-within:border-[#FFD700] transition-colors">
+                  {/* Country Code inside the input box */}
+                  <div className="pl-4 pr-2 text-gray-500 font-medium whitespace-nowrap">
+                    {selectedCountry.code || "Code"}
+                  </div>
                   <input type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required
-                    className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                    className="w-full p-3 bg-transparent text-black dark:text-white outline-none" />
                 </div>
               </>
             )}
