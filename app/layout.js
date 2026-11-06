@@ -1,5 +1,4 @@
 import './globals.css'
-import { ClerkProvider } from '@clerk/nextjs' // if you're using Clerk, otherwise remove
 import Providers from './providers'
 
 export const metadata = {
