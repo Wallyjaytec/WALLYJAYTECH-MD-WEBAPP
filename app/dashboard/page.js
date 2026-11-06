@@ -111,7 +111,6 @@ export default function Dashboard() {
         return;
       }
       
-      // 1. Sign up user in Supabase
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -123,7 +122,6 @@ export default function Dashboard() {
       if (error) { setAuthError(error.message); return; }
 
       if (data.user) {
-        // 2. Save extra profile info
         await supabase.from('user_settings').insert([{
           user_id: data.user.id,
           first_name: firstName,
@@ -133,18 +131,7 @@ export default function Dashboard() {
           country: selectedCountry.name
         }]);
 
-        // 3. Send the email via our custom Brevo API route
-        try {
-          await fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, firstName })
-          });
-        } catch (err) {
-          console.error("Email sending failed", err);
-        }
-
-        setAuthError("Success! Check your email, then Log in.");
+        setAuthError("Verify your email to activate your account. Check your inbox, then log in.");
         setIsLogin(true);
       }
     } else {
