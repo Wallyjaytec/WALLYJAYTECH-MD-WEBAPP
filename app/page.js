@@ -7,7 +7,8 @@ import {
   ArrowRight, Shield, Zap, Sparkles, Menu, X, 
   Play, Bot, Image as ImageIcon, Globe, Star, 
   CheckCircle, ArrowUp, Camera, Mic, Send, CheckCheck, 
-  UserPlus, QrCode, Settings, Mail, ChevronLeft, ChevronRight
+  UserPlus, QrCode, Settings, Mail, ChevronLeft, ChevronRight,
+  Plus, Minus
 } from "lucide-react";
 
 // --- ORIGINAL SVG BRAND ICONS ---
@@ -89,6 +90,7 @@ export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(null);
   const [activeFeature, setActiveFeature] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null); // FAQ state
   const scrollTimeout = useRef(null);
 
   const logoPath = "/assets/images/web_logo.png";
@@ -140,6 +142,17 @@ export default function LandingPage() {
     }
   ];
 
+  const faqs = [
+    { q: "What is WALLYJAYTECH-MD?", a: "WALLYJAYTECH-MD is an advanced multi-device WhatsApp bot designed to automate tasks, manage groups, download media, and provide AI chat features." },
+    { q: "Is the bot free to use?", a: "Yes! The core features are 100% free. We also offer a Premium tier for users who want access to exclusive commands and higher limits." },
+    { q: "Will my WhatsApp account get banned?", a: "We use secure and anti-ban measures, but any unofficial WhatsApp bot carries a slight risk. We recommend using a secondary number for testing." },
+    { q: "How do I connect the bot to my WhatsApp?", a: "Simply sign up on our dashboard, generate a pairing code or scan the QR code, and link it to your WhatsApp app." },
+    { q: "Can I use the bot in multiple groups?", a: "Yes, once connected, you can add the bot to as many groups as you want. You can also manage its group settings directly from the dashboard." },
+    { q: "What are the 3000+ commands?", a: "The bot includes commands for AI (GPT, Gemini), downloaders (TikTok, YouTube, IG), group moderation (Antilink, Antibadword), games, and media tools." },
+    { q: "Can I toggle features on and off?", a: "Absolutely. Our SaaS dashboard allows you to turn features like AI, Antilink, and Autostatus on or off instantly." },
+    { q: "How do I get support?", a: "You can reach out to us via our WhatsApp support group, Telegram, or email. Links are available in the footer below." }
+  ];
+
   const phoneFeatures = [
     "Multi-Device Support", "3000+ Powerful Commands", "AI Features & Smart Replies", 
     "Media Downloader (Video, Audio)", "Group Management (Admin Tools)", "Anti-Ban Protection"
@@ -159,13 +172,9 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [testimonials.length]);
 
-  // Auto-hide scroll to top & close menu on scroll
   useEffect(() => {
     const handleScroll = () => {
-      // Close menu on scroll
       setIsMenuOpen(false);
-
-      // Show button logic
       const scrollY = window.scrollY;
       if (scrollY > 400) {
         setShowScrollTop(true);
@@ -184,6 +193,10 @@ export default function LandingPage() {
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
   }, []);
+
+  const toggleFaq = (index) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-black dark:text-white transition-colors duration-300 overflow-x-hidden relative font-sans flex flex-col">
@@ -216,9 +229,7 @@ export default function LandingPage() {
         <AnimatePresence>
           {isMenuOpen && (
             <>
-              {/* Invisible overlay to catch clicks outside menu */}
               <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsMenuOpen(false)}></div>
-              
               <motion.div 
                 initial={{ opacity: 0, y: -10 }} 
                 animate={{ opacity: 1, y: 0 }} 
@@ -346,7 +357,7 @@ export default function LandingPage() {
               </div>
             </div>
             
-            {/* REALISTIC PHONE MOCKUP (Asterisks Removed) */}
+            {/* REALISTIC PHONE MOCKUP */}
             <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
               <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
@@ -446,7 +457,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* HOW IT WORKS (No Step Numbers) */}
+        {/* HOW IT WORKS */}
         <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
@@ -480,7 +491,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* TESTIMONIALS (8 Slides) */}
+        {/* TESTIMONIALS */}
         <section id="testimonials" className="py-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
@@ -536,7 +547,6 @@ export default function LandingPage() {
               <p className="text-gray-500 dark:text-gray-400">The passionate team behind WALLYJAYTECH-MD.</p>
             </div>
 
-            {/* Slider Container */}
             <div className="relative">
               <div className="overflow-hidden py-4">
                 <motion.div 
@@ -569,7 +579,6 @@ export default function LandingPage() {
                 </motion.div>
               </div>
               
-              {/* Manual Navigation Buttons */}
               <button 
                 onClick={() => setAboutSlide(prev => Math.max(0, prev - 1))}
                 className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 md:-ml-6 p-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-full hover:bg-[#FFD700] hover:text-black hover:border-[#FFD700] transition-all shadow-md z-10"
@@ -586,7 +595,6 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Dots */}
             <div className="flex justify-center gap-2 mt-8">
               {aboutTeam.map((_, i) => (
                 <button key={i} onClick={() => setAboutSlide(i)} className={`w-3 h-3 rounded-full transition-all ${aboutSlide === i ? 'bg-[#FFD700] w-8' : 'bg-gray-300 dark:bg-gray-700'}`} />
@@ -628,10 +636,51 @@ export default function LandingPage() {
             </Link>
           </div>
         </section>
+
+        {/* FREQUENTLY ASKED QUESTIONS (FAQ) */}
+        <section className="py-24 bg-gray-50 dark:bg-[#080808] border-t border-gray-200 dark:border-gray-800">
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-5xl font-black mb-4">Frequently Asked Questions</h2>
+              <p className="text-gray-500 dark:text-gray-400">Everything you need to know about the bot and the dashboard.</p>
+            </div>
+
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
+                <div 
+                  key={index} 
+                  className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden transition-all duration-300"
+                >
+                  <button 
+                    onClick={() => toggleFaq(index)}
+                    className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
+                  >
+                    <span className="font-bold text-lg">{faq.q}</span>
+                    <div className={`p-2 rounded-full transition-colors ${openFaq === index ? 'bg-[#FFD700] text-black' : 'bg-gray-100 dark:bg-[#111] text-gray-500'}`}>
+                      {openFaq === index ? <Minus size={18} /> : <Plus size={18} />}
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === index && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }} 
+                        animate={{ height: "auto", opacity: 1 }} 
+                        exit={{ height: 0, opacity: 0 }} 
+                        className="px-6 pb-6 text-gray-600 dark:text-gray-400 leading-relaxed"
+                      >
+                        {faq.a}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* FOOTER */}
-      <footer id="contact" className="bg-gray-50 dark:bg-[#080808] border-t border-gray-200 dark:border-gray-800 pt-16 pb-8 relative z-10">
+      <footer id="contact" className="bg-white dark:bg-[#050505] border-t border-gray-200 dark:border-gray-800 pt-16 pb-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-start gap-12 mb-12">
@@ -657,8 +706,8 @@ export default function LandingPage() {
               <div id="terms">
                 <h4 className="font-bold mb-4">Legal</h4>
                 <ul className="flex flex-col space-y-2 text-sm text-gray-500 dark:text-gray-400">
-                  <li><a href="#" className="hover:text-[#FFD700]">Terms of Service</a></li>
-                  <li><a href="#" className="hover:text-[#FFD700]">Privacy Policy</a></li>
+                  <li><Link href="/terms" className="hover:text-[#FFD700]">Terms of Service</Link></li>
+                  <li><Link href="/privacy" className="hover:text-[#FFD700]">Privacy Policy</Link></li>
                 </ul>
               </div>
 
@@ -675,24 +724,23 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ICONS ON TOP, THEN LINE, THEN COPYRIGHT */}
           <div className="flex justify-center gap-4 mb-8">
-            <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+            <a href="https://github.com/wallyjaytechh" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
               <GithubIcon size={20} className="text-black dark:text-white" />
             </a>
-            <a href="https://wa.me/2348144317152" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+            <a href="https://wa.me/2348144317152" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
               <WhatsappIcon size={20} className="text-[#25D366]" />
             </a>
-            <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+            <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
               <YoutubeIcon size={20} className="text-[#FF0000]" />
             </a>
-            <a href="https://tiktok.com/@wallyjaytech" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+            <a href="https://tiktok.com/@wallyjaytech" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
               <TiktokIcon size={20} className="text-black dark:text-white" />
             </a>
-            <a href="https://t.me/wallyjaytechs" target="_blank" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+            <a href="https://t.me/wallyjaytechs" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
               <TelegramIcon size={20} className="text-[#0088cc]" />
             </a>
-            <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-white dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
+            <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm">
               <GmailIcon size={20} className="text-[#EA4335]" />
             </a>
           </div>
@@ -704,7 +752,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* AUTO SCROLL TO TOP BUTTON (Auto-hides immediately at top) */}
+      {/* AUTO SCROLL TO TOP BUTTON */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
