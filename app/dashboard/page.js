@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link"; // Added for the X button
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -29,6 +29,10 @@ const countries = [
   { name: "Kenya", code: "+254", flag: "🇰🇪" },
   { name: "Canada", code: "+1", flag: "🇨🇦" },
   { name: "India", code: "+91", flag: "🇮🇳" },
+  { name: "Germany", code: "+49", flag: "🇩🇪" },
+  { name: "France", code: "+33", flag: "🇫🇷" },
+  { name: "Australia", code: "+61", flag: "🇦🇺" },
+  { name: "Brazil", code: "+55", flag: "🇧🇷" },
 ];
 
 export default function Dashboard() {
@@ -42,7 +46,9 @@ export default function Dashboard() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [authError, setAuthError] = useState("");
@@ -55,7 +61,8 @@ export default function Dashboard() {
     autostatus_enabled: false,
     autorecord_enabled: false,
     plan_type: 'Free',
-    username: ''
+    first_name: '',
+    last_name: ''
   });
 
   useEffect(() => {
@@ -101,7 +108,8 @@ export default function Dashboard() {
       if (data.user) {
         await supabase.from('user_settings').insert([{
           user_id: data.user.id,
-          username: username,
+          first_name: firstName,
+          last_name: lastName,
           phone: selectedCountry.code + phone,
           country: selectedCountry.name
         }]);
@@ -109,6 +117,9 @@ export default function Dashboard() {
         setIsLogin(true);
       }
     } else {
+      // Supabase login only supports email by default. 
+      // If user entered a username, we would need to look up their email first. 
+      // For simplicity, we are assuming they enter their email to log in.
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setAuthError(error.message);
     }
@@ -127,7 +138,6 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative"
         >
-          {/* X CLOSE BUTTON */}
           <Link 
             href="/" 
             className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
@@ -152,41 +162,66 @@ export default function Dashboard() {
           <form onSubmit={handleAuth} className="space-y-4">
             
             {!isLogin && (
-              <div className="relative">
-                <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required
-                  className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              <div className="flex gap-3">
+                <div className="relative w-1/2">
+                  <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                  <input type="text" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} required
+                    className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                </div>
+                <div className="relative w-1/2">
+                  <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                  <input type="text" placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} required
+                    className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                </div>
               </div>
             )}
 
             <div className="relative">
               <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required
-                className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              <input 
+                type={isLogin ? "text" : "email"} 
+                placeholder={isLogin ? "Email or Username" : "Email Address"} 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                required
+                className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" 
+              />
             </div>
 
             {!isLogin && (
-              <div className="flex gap-2">
-                <div className="relative w-1/3">
-                  <select 
-                    value={selectedCountry.code}
-                    onChange={(e) => {
-                      const country = countries.find(c => c.code === e.target.value);
-                      if (country) setSelectedCountry(country);
-                    }}
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer"
-                  >
-                    {countries.map((c, i) => (
-                      <option key={i} value={c.code}>{c.flag} {c.code}</option>
-                    ))}
-                  </select>
+              <>
+                <div className="flex gap-3">
+                  <div className="relative w-1/2">
+                    <Globe className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <select 
+                      value={selectedCountry.name}
+                      onChange={(e) => {
+                        const country = countries.find(c => c.name === e.target.value);
+                        if (country) setSelectedCountry(country);
+                      }}
+                      className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer"
+                    >
+                      {countries.map((c, i) => (
+                        <option key={i} value={c.name}>{c.flag} {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="relative w-1/2">
+                    <input 
+                      type="text" 
+                      value={selectedCountry.code} 
+                      readOnly 
+                      className="w-full p-3 pl-3 rounded-xl bg-gray-200 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 outline-none cursor-not-allowed font-mono text-sm"
+                    />
+                  </div>
                 </div>
-                <div className="relative w-2/3">
+
+                <div className="relative">
                   <Phone className="absolute left-3 top-3.5 text-gray-400" size={18} />
                   <input type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required
                     className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
                 </div>
-              </div>
+              </>
             )}
 
             <div className="relative">
@@ -212,13 +247,20 @@ export default function Dashboard() {
               <div className="relative">
                 <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
                 <input 
-                  type={showPassword ? "text" : "password"} 
+                  type={showConfirmPassword ? "text" : "password"} 
                   placeholder="Confirm Password" 
                   value={confirmPassword} 
                   onChange={e => setConfirmPassword(e.target.value)} 
                   required
                   className="w-full p-3 pl-10 pr-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" 
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-3.5 text-gray-400 hover:text-[#FFD700]"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             )}
 
@@ -227,14 +269,12 @@ export default function Dashboard() {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
             <span className="text-xs text-gray-400 font-medium uppercase">Or</span>
             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
           </div>
 
-          {/* Google Auth Button */}
           <button className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-all font-bold text-sm">
             <GoogleIcon size={20} />
             {isLogin ? "Log in with Google" : "Sign up with Google"}
@@ -256,7 +296,6 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-white dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans transition-colors duration-300">
       
-      {/* SIDEBAR */}
       <aside className="w-64 bg-gray-50 dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800">
           <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
@@ -280,7 +319,6 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#FFD700] opacity-5 blur-[100px] rounded-full pointer-events-none"></div>
 
@@ -288,7 +326,7 @@ export default function Dashboard() {
           <header className="flex justify-between items-center mb-10">
             <div>
               <h2 className="text-3xl font-bold capitalize">{activeTab}</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Welcome back, {settings.username || session.user.email.split('@')[0]}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Welcome back, {settings.first_name || session.user.email.split('@')[0]}</p>
             </div>
             <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#111] px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800">
                <span className={`w-2 h-2 rounded-full ${settings.bot_connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
@@ -298,7 +336,6 @@ export default function Dashboard() {
 
           <AnimatePresence mode="wait">
             
-            {/* TAB: DASHBOARD */}
             {activeTab === 'dashboard' && (
               <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -317,7 +354,6 @@ export default function Dashboard() {
               </motion.div>
             )}
 
-            {/* TAB: FEATURES */}
             {activeTab === 'features' && (
               <motion.div key="feat" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -329,7 +365,6 @@ export default function Dashboard() {
               </motion.div>
             )}
 
-            {/* TAB: PROFILE */}
             {activeTab === 'profile' && (
               <motion.div key="prof" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
                 <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-8 rounded-3xl max-w-2xl">
@@ -337,12 +372,12 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-gray-500">Username</label>
-                        <p className="font-bold text-lg mt-1">{settings.username || 'N/A'}</p>
+                        <label className="text-sm text-gray-500">First Name</label>
+                        <p className="font-bold text-lg mt-1">{settings.first_name || 'N/A'}</p>
                       </div>
                       <div>
-                        <label className="text-sm text-gray-500">Plan</label>
-                        <p className="font-bold text-lg mt-1">{settings.plan_type}</p>
+                        <label className="text-sm text-gray-500">Last Name</label>
+                        <p className="font-bold text-lg mt-1">{settings.last_name || 'N/A'}</p>
                       </div>
                     </div>
                     <div>
@@ -354,7 +389,6 @@ export default function Dashboard() {
               </motion.div>
             )}
 
-            {/* TAB: BILLING */}
             {activeTab === 'billing' && (
               <motion.div key="bill" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="text-center py-20">
                 <CreditCard size={64} className="mx-auto text-gray-400 mb-4" />
