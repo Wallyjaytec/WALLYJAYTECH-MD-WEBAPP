@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { 
   ArrowRight, Shield, Zap, Sparkles, Menu, X, 
   Play, Bot, Image as ImageIcon, Globe, Star, 
   CheckCircle, ArrowUp, Camera, Mic, Send, CheckCheck, 
   UserPlus, QrCode, Settings, Mail, ChevronLeft, ChevronRight,
-  Plus, Minus
+  Plus, Minus, Sun, Moon
 } from "lucide-react";
 
 // --- ORIGINAL SVG BRAND ICONS ---
@@ -50,26 +51,17 @@ function AnimatedCounter({ end, suffix = "", decimals = 0 }) {
   const isInView = useInView(ref, { margin: "-50px" });
 
   useEffect(() => {
-    if (!isInView) {
-      setCount(0);
-      return;
-    }
-
+    if (!isInView) { setCount(0); return; }
     let animationFrame;
     const duration = 2000;
     const startTime = performance.now();
-    
     const updateCount = (currentTime) => {
       const elapsedTime = currentTime - startTime;
       const progress = Math.min(elapsedTime / duration, 1);
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       setCount(easeProgress * end);
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(updateCount);
-      }
+      if (progress < 1) animationFrame = requestAnimationFrame(updateCount);
     };
-    
     animationFrame = requestAnimationFrame(updateCount);
     return () => cancelAnimationFrame(animationFrame);
   }, [isInView, end]);
@@ -83,6 +75,8 @@ function AnimatedCounter({ end, suffix = "", decimals = 0 }) {
 }
 
 export default function LandingPage() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [testimonialSlide, setTestimonialSlide] = useState(0);
@@ -90,8 +84,11 @@ export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(null);
   const [activeFeature, setActiveFeature] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [openFaq, setOpenFaq] = useState(null); // FAQ state
+  const [openFaq, setOpenFaq] = useState(null);
   const scrollTimeout = useRef(null);
+
+  // Wait until mounted to render theme-dependent UI (prevents hydration errors)
+  useEffect(() => setMounted(true), []);
 
   const logoPath = "/assets/images/web_logo.png";
   const heroImagePath = "/assets/images/web_asset1.jpg";
@@ -116,30 +113,10 @@ export default function LandingPage() {
   ];
 
   const aboutTeam = [
-    { 
-      name: "Wally Jay", 
-      role: "Creator & Lead Developer", 
-      img: "/assets/images/about_us.png", 
-      desc: "A 22-year-old professional web developer with a deep passion for coding. His vision for WALLYJAYTECH-MD is to make WhatsApp easier and more fun to use through intelligent automation — creating a powerful, accessible bot that enhances everyday messaging for communities, creators, and businesses worldwide." 
-    },
-    { 
-      name: "Anonymous", 
-      role: "Bot Tester Expert", 
-      img: "/assets/images/anonymous.png", 
-      desc: "An expert in identifying hidden bugs and pushing the bot to its limits. Anonymous ensures that every feature works flawlessly before it reaches the public, providing critical feedback that keeps the bot running at peak performance." 
-    },
-    { 
-      name: "Winne Tech", 
-      role: "Quality Assurance & Tester", 
-      img: "/assets/images/winnertech.png", 
-      desc: "Specializes in making sure the bot's features meet what people actually want. Winne Tech rigorously tests every update for better improvement, ensuring the user experience is smooth, intuitive, and highly reliable." 
-    },
-    { 
-      name: "Young Cash", 
-      role: "Beta Tester", 
-      img: "/assets/images/youngcash.png", 
-      desc: "A dedicated tester who explores the bot from a user's perspective. Young Cash helps verify that the latest features are not only functional but also deliver the best possible experience for every group and community." 
-    }
+    { name: "Wally Jay", role: "Creator & Lead Developer", img: "/assets/images/about_us.png", desc: "A 22-year-old professional web developer with a deep passion for coding. His vision for WALLYJAYTECH-MD is to make WhatsApp easier and more fun to use through intelligent automation." },
+    { name: "Anonymous", role: "Bot Tester Expert", img: "/assets/images/anonymous.png", desc: "An expert in identifying hidden bugs and pushing the bot to its limits. Anonymous ensures that every feature works flawlessly before it reaches the public." },
+    { name: "Winne Tech", role: "Quality Assurance & Tester", img: "/assets/images/winnertech.png", desc: "Specializes in making sure the bot's features meet what people actually want. Winne Tech rigorously tests every update for better improvement." },
+    { name: "Young Cash", role: "Beta Tester", img: "/assets/images/youngcash.png", desc: "A dedicated tester who explores the bot from a user's perspective. Young Cash helps verify that the latest features deliver the best possible experience." }
   ];
 
   const faqs = [
@@ -179,14 +156,11 @@ export default function LandingPage() {
       if (scrollY > 400) {
         setShowScrollTop(true);
         if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = setTimeout(() => {
-          setShowScrollTop(false);
-        }, 3000);
+        scrollTimeout.current = setTimeout(() => setShowScrollTop(false), 3000);
       } else {
         setShowScrollTop(false);
       }
     };
-    
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -212,30 +186,41 @@ export default function LandingPage() {
             <span className="font-black text-xl tracking-tighter">WALLYJAYTECH-MD</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 font-semibold text-sm">
+          <div className="hidden md:flex items-center gap-6 font-semibold text-sm">
             <a href="#features" className="hover:text-[#FFD700] transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-[#FFD700] transition-colors">How it Works</a>
             <a href="#testimonials" className="hover:text-[#FFD700] transition-colors">Reviews</a>
+            
+            {/* Desktop Theme Toggle */}
+            {mounted && (
+              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 text-gray-600 dark:text-gray-300 hover:text-[#FFD700] dark:hover:text-[#FFD700] transition-colors">
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            )}
+
             <Link href="/dashboard" className="bg-[#FFD700] text-black px-6 py-2 rounded-full hover:bg-yellow-500 transition-all font-bold">
               Login / Dashboard
             </Link>
           </div>
 
-          <button className="md:hidden p-2 z-50" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+          {/* Mobile Controls (Theme + Hamburger) */}
+          <div className="flex items-center gap-3 md:hidden">
+            {mounted && (
+              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 text-gray-600 dark:text-gray-300">
+                {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+              </button>
+            )}
+            <button className="p-2 z-50" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
         </div>
 
         <AnimatePresence>
           {isMenuOpen && (
             <>
               <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsMenuOpen(false)}></div>
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                exit={{ opacity: 0, y: -10 }} 
-                className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 shadow-xl z-50"
-              >
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 shadow-xl z-50">
                 <div className="flex flex-col p-4 space-y-4 font-bold text-lg">
                   <a href="#features" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Features</a>
                   <a href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">How it Works</a>
