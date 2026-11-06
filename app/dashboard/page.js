@@ -23,16 +23,17 @@ const GoogleIcon = ({ size = 20, className = "" }) => (
   </svg>
 );
 
+// Countries with their expected phone number length
 const countries = [
-  { name: "Select Country", code: "", flag: "" },
-  { name: "Nigeria", code: "+234", flag: "🇳🇬" },
-  { name: "United States", code: "+1", flag: "🇺🇸" },
-  { name: "United Kingdom", code: "+44", flag: "🇬🇧" },
-  { name: "Ghana", code: "+233", flag: "🇬🇭" },
-  { name: "South Africa", code: "+27", flag: "🇿🇦" },
-  { name: "Kenya", code: "+254", flag: "🇰🇪" },
-  { name: "Canada", code: "+1", flag: "🇨🇦" },
-  { name: "India", code: "+91", flag: "🇮🇳" },
+  { name: "Select Country", code: "", flag: "", phoneLength: 0 },
+  { name: "Nigeria", code: "+234", flag: "🇳🇬", phoneLength: 10 },
+  { name: "United States", code: "+1", flag: "🇺🇸", phoneLength: 10 },
+  { name: "United Kingdom", code: "+44", flag: "🇬🇧", phoneLength: 10 },
+  { name: "Ghana", code: "+233", flag: "🇬🇭", phoneLength: 9 },
+  { name: "South Africa", code: "+27", flag: "🇿🇦", phoneLength: 9 },
+  { name: "Kenya", code: "+254", flag: "🇰🇪", phoneLength: 9 },
+  { name: "Canada", code: "+1", flag: "🇨🇦", phoneLength: 10 },
+  { name: "India", code: "+91", flag: "🇮🇳", phoneLength: 10 },
 ];
 
 export default function Dashboard() {
@@ -70,14 +71,22 @@ export default function Dashboard() {
     last_name: 'Jay'
   });
 
-  // --- USERNAME VALIDATION ---
-  // Rules: Must start with at least 5 letters. Then optional numbers only.
-  // Valid: "wallyjay", "wallyjay123", "wallyjaytech2025"
-  // Invalid: "wally1jay", "wally_jay", "123wally"
-  const validateUsername = (name) => {
-    const regex = /^[a-zA-Z]{5,}[0-9]*$/;
-    return regex.test(name);
-  };
+  // --- VALIDATION FUNCTIONS ---
+
+  // Username: 5+ letters first, then optional numbers. No symbols, no letters after numbers.
+  const validateUsername = (name) => /^[a-zA-Z]{5,}[0-9]*$/.test(name);
+
+  // Name: Only letters (A-Z, a-z), no spaces, no numbers.
+  const validateName = (name) => /^[a-zA-Z]+$/.test(name);
+
+  // Email: Must be @gmail.com. Starts with letters, may end with numbers before @.
+  const validateEmail = (email) => /^[a-zA-Z]{1,}[0-9]*@gmail\.com$/.test(email);
+
+  // Password: 8+ chars, at least 1 letter, at least 1 number.
+  const validatePassword = (pass) => /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(pass);
+
+  // Phone: Must match the country's expected length.
+  const validatePhone = (number, countryLength) => number.length === countryLength;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -124,18 +133,17 @@ export default function Dashboard() {
     setAuthError("");
 
     if (!isLogin) {
-      // 1. Validate Username format
-      if (!validateUsername(username)) {
-        setAuthError("Username must start with at least 5 letters (e.g., 'wallyjay123'). No symbols or letters after numbers.");
-        return;
-      }
+      // Strict Validations
+      if (!validateName(firstName)) return setAuthError("First name must contain only letters.");
+      if (!validateName(lastName)) return setAuthError("Last name must contain only letters.");
+      if (!validateUsername(username)) return setAuthError("Username must be 5+ letters, followed by optional numbers only. No symbols.");
+      if (!validateEmail(email)) return setAuthError("Email must end with @gmail.com and start with letters, optional numbers.");
+      if (!validatePhone(phone, selectedCountry.phoneLength)) return setAuthError(`Phone number must be exactly ${selectedCountry.phoneLength} digits for ${selectedCountry.name}.`);
+      if (!validatePassword(password)) return setAuthError("Password must be at least 8 characters long and include both letters and numbers.");
+      if (password !== confirmPassword) return setAuthError("Passwords do not match.");
+      if (!selectedCountry.code) return setAuthError("Please select a country.");
+      if (!agreedToTerms) return setAuthError("You must agree to the Terms of Service and Privacy Policy.");
 
-      // 2. Validate Passwords
-      if (password !== confirmPassword) { setAuthError("Passwords do not match."); return; }
-      if (!selectedCountry.code) { setAuthError("Please select a country."); return; }
-      if (!agreedToTerms) { setAuthError("You must agree to the Terms of Service and Privacy Policy."); return; }
-      
-      // 3. Sign Up
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password, 
@@ -155,14 +163,10 @@ export default function Dashboard() {
         setIsLogin(true);
       }
     } else {
-      // --- REMEMBER ME LOGIC ---
-      // Supabase client is initialized with persistSession: true by default.
-      // If user doesn't want to be remembered, we clear the session manually after login when they close the browser.
-      
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) { setAuthError(error.message); return; }
       
-      // If rememberMe is false, store a flag so we can log out on refresh/close
+      // Remember Me
       if (!rememberMe) {
         localStorage.setItem("temp_session", "true");
       } else {
@@ -171,9 +175,8 @@ export default function Dashboard() {
     }
   };
 
-  // Effect to handle "Remember Me" on browser refresh
+  // Handle "Remember Me" on browser reload
   useEffect(() => {
-    // If the page is loading and there's a temp_session flag, it means the browser was refreshed and we should log out.
     const temp = localStorage.getItem("temp_session");
     if (temp === "true") {
       localStorage.removeItem("temp_session");
@@ -215,14 +218,14 @@ export default function Dashboard() {
                 </div>
                 <div className="relative">
                   <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input type="text" placeholder="Username (e.g. wallyjay123)" value={username} onChange={e => setUsername(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+                  <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
                 </div>
               </>
             )}
 
             <div className="relative">
               <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type={isLogin ? "text" : "email"} placeholder={isLogin ? "Email or Username" : "Email Address"} value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              <input type={isLogin ? "text" : "email"} placeholder={isLogin ? "Email" : "Email Address"} value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
             </div>
 
             {!isLogin && (
@@ -527,7 +530,7 @@ export default function Dashboard() {
                   <FeatureToggle title="Smart Context Memory" desc="The AI remembers previous messages in the chat." isOn={true} onToggle={() => {}} />
                   <div className="md:col-span-2 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a]">
                     <h3 className="font-bold text-lg mb-2">Custom AI Persona</h3>
-                    <textarea placeholder="Tell the AI how to act (e.g., You are a helpful assistant for Wally Jay)..." className="w-full h-32 p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors"></textarea>
+                    <textarea placeholder="Tell the AI how to act..." className="w-full h-32 p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors"></textarea>
                   </div>
                 </div>
               </motion.div>
