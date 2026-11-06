@@ -56,6 +56,7 @@ export default function Dashboard() {
   const [authError, setAuthError] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   
   const [settings, setSettings] = useState({
     bot_connected: true,
@@ -72,51 +73,44 @@ export default function Dashboard() {
   const validateUsername = (name) => /^[a-zA-Z]{5,}[0-9]*$/.test(name);
   const validateName = (name) => /^[a-zA-Z]+$/.test(name);
   const validateEmail = (email) => /^[a-zA-Z]{1,}[0-9]*@gmail\.com$/.test(email);
-  const validatePhone = (number, countryLength) => number.length === countryLength;
+  const validatePhone = (number, len) => number.length === len;
 
-  // Professional Password: 8+ chars, 1 upper, 1 lower, 1 number, 1 symbol
   const validatePassword = (pass) => {
-    const hasUpper = /[A-Z]/.test(pass);
-    const hasLower = /[a-z]/.test(pass);
-    const hasNumber = /[0-9]/.test(pass);
-    const hasSymbol = /[!@#$%^&*(),.?":{}|<>_\-]/.test(pass);
-    const isLongEnough = pass.length >= 8;
-    return hasUpper && hasLower && hasNumber && hasSymbol && isLongEnough;
+    return (
+      pass.length >= 8 &&
+      /[A-Z]/.test(pass) &&
+      /[a-z]/.test(pass) &&
+      /[0-9]/.test(pass) &&
+      /[!@#$%^&*(),.?":{}|<>_\-]/.test(pass)
+    );
   };
 
   const getPasswordErrorMessage = (pass) => {
     const errors = [];
-    if (pass.length < 8) errors.push("at least 8 characters");
-    if (!/[A-Z]/.test(pass)) errors.push("1 uppercase letter");
-    if (!/[a-z]/.test(pass)) errors.push("1 lowercase letter");
+    if (pass.length < 8) errors.push("8+ characters");
+    if (!/[A-Z]/.test(pass)) errors.push("1 uppercase");
+    if (!/[a-z]/.test(pass)) errors.push("1 lowercase");
     if (!/[0-9]/.test(pass)) errors.push("1 number");
-    if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(pass)) errors.push("1 symbol");
-    return "Password must contain: " + errors.join(", ") + ".";
+    if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(pass)) errors.push("1 symbol (!@#$...)");
+    return "Password must contain: " + errors.join(", ");
   };
 
   useEffect(() => {
-    // Load session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) fetchSettings(session.user.id);
       setLoading(false);
     });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) fetchSettings(session.user.id);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- REMEMBER ME LOGIC ---
-  // If "remember me" was NOT checked on login, clear the session on page refresh
   useEffect(() => {
     const shouldPersist = sessionStorage.getItem("remember_me");
-    // If user previously logged in without remember me, force logout on refresh
     if (shouldPersist === "false") {
-      // Keep them logged in during the session, but on a fresh page load (new tab), log out
       const isNewSession = !sessionStorage.getItem("session_active");
       if (isNewSession) {
         supabase.auth.signOut();
@@ -128,7 +122,7 @@ export default function Dashboard() {
   }, []);
 
   const fetchSettings = async (userId) => {
-    const { data, error } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
+    const { data } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
     if (data) setSettings(data);
   };
 
@@ -153,52 +147,99 @@ export default function Dashboard() {
     else setAuthError("Password reset link sent! Check your email.");
   };
 
+  // --- CHECK USERNAME / PHONE / EMAIL AVAILABILITY ---
+  const checkAvailability = async () => {
+    // Check username
+    const { data: usernameData, error: usernameErr } = await supabase
+      .from('user_settings')
+      .select('username')
+      .ilike('username', username)
+      .maybeSingle();
+    if (usernameErr) throw new Error("Could not verify username. Please try again.");
+    if (usernameData) throw new Error("❌ This username is already taken. Please choose another.");
+
+    // Check phone
+    const fullPhone = selectedCountry.code + phone;
+    const { data: phoneData, error: phoneErr } = await supabase
+      .from('user_settings')
+      .select('phone')
+      .eq('phone', fullPhone)
+      .maybeSingle();
+    if (phoneErr) throw new Error("Could not verify phone. Please try again.");
+    if (phoneData) throw new Error("❌ This phone number is already registered.");
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     setAuthError("");
+    setSubmitting(true);
 
-    if (!isLogin) {
-      // Strict Validations
-      if (!validateName(firstName)) return setAuthError("First name must contain only letters.");
-      if (!validateName(lastName)) return setAuthError("Last name must contain only letters.");
-      if (!validateUsername(username)) return setAuthError("Username must be 5+ letters, followed by optional numbers only. No symbols.");
-      if (!validateEmail(email)) return setAuthError("Email must end with @gmail.com and start with letters.");
-      if (!validatePhone(phone, selectedCountry.phoneLength)) return setAuthError(`Phone number must be exactly ${selectedCountry.phoneLength} digits for ${selectedCountry.name}.`);
-      if (!validatePassword(password)) return setAuthError(getPasswordErrorMessage(password));
-      if (password !== confirmPassword) return setAuthError("Passwords do not match.");
-      if (!selectedCountry.code) return setAuthError("Please select a country.");
-      if (!agreedToTerms) return setAuthError("You must agree to the Terms of Service and Privacy Policy.");
+    try {
+      if (!isLogin) {
+        // Validation
+        if (!validateName(firstName)) throw new Error("First name must contain only letters.");
+        if (!validateName(lastName)) throw new Error("Last name must contain only letters.");
+        if (!validateUsername(username)) throw new Error("Username must be 5+ letters, followed by optional numbers.");
+        if (!validateEmail(email)) throw new Error("Email must be a valid @gmail.com address.");
+        if (!selectedCountry.code) throw new Error("Please select a country.");
+        if (!validatePhone(phone, selectedCountry.phoneLength)) throw new Error(`Phone must be ${selectedCountry.phoneLength} digits for ${selectedCountry.name}.`);
+        if (!validatePassword(password)) throw new Error(getPasswordErrorMessage(password));
+        if (password !== confirmPassword) throw new Error("Passwords do not match.");
+        if (!agreedToTerms) throw new Error("You must agree to the Terms of Service and Privacy Policy.");
 
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password, 
-        options: { 
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: { username: username }
+        // Check availability BEFORE signup
+        await checkAvailability();
+
+        // Sign up
+        const { data, error } = await supabase.auth.signUp({ 
+          email, 
+          password, 
+          options: { 
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: { username }
+          }
+        });
+        
+        if (error) throw new Error(error.message);
+        if (!data.user) throw new Error("Signup failed. Please try again.");
+        
+        // Detect silent duplicate (Supabase returns user but no identities = already exists)
+        if (data.user.identities && data.user.identities.length === 0) {
+          throw new Error("❌ This email is already registered. Please log in instead.");
         }
-      });
-      
-      if (error) { setAuthError(error.message); return; }
 
-      if (data.user) {
-        await supabase.from('user_settings').insert([{
-          user_id: data.user.id, first_name: firstName, last_name: lastName, username: username, phone: selectedCountry.code + phone, country: selectedCountry.name
+        // Insert profile data
+        const { error: insertError } = await supabase.from('user_settings').insert([{
+          user_id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          username: username,
+          phone: selectedCountry.code + phone,
+          country: selectedCountry.name
         }]);
-        setAuthError("Verify your email to activate your account. Check your inbox, then log in.");
+
+        if (insertError) {
+          // Rollback is not possible in free tier — tell user to contact support
+          throw new Error("Account created but profile save failed: " + insertError.message + ". Please contact support.");
+        }
+
+        setAuthError("✅ Verify your email to activate your account. Check your inbox, then log in.");
         setIsLogin(true);
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) { setAuthError(error.message); return; }
-      
-      // Remember Me: save preference
-      if (rememberMe) {
-        sessionStorage.setItem("remember_me", "true");
       } else {
-        sessionStorage.setItem("remember_me", "false");
-        // Session will be cleared on page refresh via the useEffect above
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw new Error(error.message);
+        
+        if (rememberMe) {
+          sessionStorage.setItem("remember_me", "true");
+        } else {
+          sessionStorage.setItem("remember_me", "false");
+        }
+        sessionStorage.setItem("session_active", "true");
       }
-      sessionStorage.setItem("session_active", "true");
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -213,7 +254,6 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative">
           <Link href="/" className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"><X size={20} /></Link>
           
-          {/* Logo now links to homepage */}
           <Link href="/" className="flex justify-center mb-4">
             <img src="/assets/images/web_logo.png" alt="Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.3)] object-contain bg-black p-2 hover:scale-105 transition-transform" />
           </Link>
@@ -221,7 +261,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">WALLYJAYTECH-MD</h1>
           <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">{isLogin ? "Login to your dashboard" : "Create your dashboard"}</p>
           
-          {authError && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 text-red-500 text-sm rounded-lg text-center">{authError}</div>}
+          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.startsWith("✅") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
 
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
@@ -245,7 +285,7 @@ export default function Dashboard() {
 
             <div className="relative">
               <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type={isLogin ? "text" : "email"} placeholder={isLogin ? "Email" : "Email Address"} value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
             </div>
 
             {!isLogin && (
@@ -299,8 +339,8 @@ export default function Dashboard() {
               </div>
             )}
 
-            <button type="submit" disabled={!isLogin && !agreedToTerms} className={`w-full p-4 mt-2 rounded-xl font-black transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)] ${!isLogin && !agreedToTerms ? 'bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#FFD700] text-black hover:bg-yellow-500'}`}>
-              {isLogin ? "LOG IN" : "CREATE ACCOUNT"}
+            <button type="submit" disabled={(!isLogin && !agreedToTerms) || submitting} className={`w-full p-4 mt-2 rounded-xl font-black transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)] ${(!isLogin && !agreedToTerms) || submitting ? 'bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#FFD700] text-black hover:bg-yellow-500'}`}>
+              {submitting ? "PLEASE WAIT..." : (isLogin ? "LOG IN" : "CREATE ACCOUNT")}
             </button>
           </form>
 
@@ -324,7 +364,7 @@ export default function Dashboard() {
   }
 
   // ==========================================
-  // 2. MAIN DASHBOARD
+  // 2. MAIN DASHBOARD (same as before)
   // ==========================================
   return (
     <div className="flex h-screen bg-white dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans transition-colors duration-300">
@@ -342,16 +382,8 @@ export default function Dashboard() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="md:hidden fixed inset-0 bg-black/50 z-40"
-            />
-            <motion.aside 
-              initial={{ x: 300 }} animate={{ x: 0 }} exit={{ x: 300 }}
-              transition={{ type: "tween" }}
-              className="md:hidden fixed top-0 right-0 h-full w-72 bg-white dark:bg-[#0a0a0a] z-50 border-l border-gray-200 dark:border-gray-800 flex flex-col"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="md:hidden fixed inset-0 bg-black/50 z-40" />
+            <motion.aside initial={{ x: 300 }} animate={{ x: 0 }} exit={{ x: 300 }} transition={{ type: "tween" }} className="md:hidden fixed top-0 right-0 h-full w-72 bg-white dark:bg-[#0a0a0a] z-50 border-l border-gray-200 dark:border-gray-800 flex flex-col">
               <div className="p-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                   <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
@@ -362,7 +394,6 @@ export default function Dashboard() {
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(false)}><X size={24} /></button>
               </div>
-
               <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                 <Link href="/deploy" className="flex items-center justify-between w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)] mb-6">
                   <div className="flex items-center gap-3"><Bot size={20} /> <span>Deploy New Bot</span></div>
@@ -378,7 +409,6 @@ export default function Dashboard() {
                   <SidebarItem icon={<User size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} />
                 </div>
               </nav>
-
               <div className="p-4 border-t border-gray-200 dark:border-gray-800">
                 <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold">
                   <LogOut size={20} /> Logout
@@ -397,7 +427,6 @@ export default function Dashboard() {
             <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">TECH-MD</p>
           </div>
         </div>
-
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <Link href="/deploy" className="flex items-center justify-between w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform mb-6">
             <div className="flex items-center gap-3"><Bot size={20} /> <span>Deploy New Bot</span></div>
@@ -413,7 +442,6 @@ export default function Dashboard() {
             <SidebarItem icon={<User size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
           </div>
         </nav>
-
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold">
             <LogOut size={20} /> Logout
@@ -423,9 +451,7 @@ export default function Dashboard() {
 
       <main className="flex-1 overflow-y-auto relative pt-16 md:pt-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#FFD700] opacity-5 blur-[100px] rounded-full pointer-events-none"></div>
-
         <div className="p-6 md:p-10 relative z-10">
-          
           <header className="flex justify-between items-center mb-10">
             <div>
               <h2 className="text-3xl font-bold capitalize">{activeTab === 'dashboard' ? 'Overview' : activeTab}</h2>
@@ -438,7 +464,6 @@ export default function Dashboard() {
           </header>
 
           <AnimatePresence mode="wait">
-            
             {activeTab === 'dashboard' && (
               <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
                 <div className="relative bg-black dark:bg-[#111] rounded-3xl p-8 mb-8 overflow-hidden border border-gray-800 shadow-2xl">
@@ -507,7 +532,6 @@ export default function Dashboard() {
                       ))}
                     </div>
                   </div>
-
                   <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-3xl">
                     <h3 className="text-lg font-bold mb-6 flex justify-between items-center">
                       Recent Activity 
@@ -619,17 +643,12 @@ export default function Dashboard() {
                 </button>
               </motion.div>
             )}
-
           </AnimatePresence>
         </div>
       </main>
     </div>
   );
 }
-
-// ==========================================
-// COMPONENTS
-// ==========================================
 
 function SidebarItem({ icon, label, active, onClick }) {
   return (
