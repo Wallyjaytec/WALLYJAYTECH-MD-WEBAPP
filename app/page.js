@@ -7,7 +7,7 @@ import {
   ArrowRight, Shield, Zap, Sparkles, Menu, X, 
   Play, Bot, Image as ImageIcon, Globe, Star, 
   CheckCircle, ArrowUp, Camera, Mic, Send, CheckCheck, 
-  UserPlus, QrCode, Settings, Mail
+  UserPlus, QrCode, Settings, Mail, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 // --- ORIGINAL SVG BRAND ICONS ---
@@ -42,7 +42,7 @@ const TiktokIcon = ({ size = 24, className = "" }) => (
   </svg>
 );
 
-// --- ANIMATED COUNTER (Triggers every time it enters viewport) ---
+// --- ANIMATED COUNTER ---
 function AnimatedCounter({ end, suffix = "", decimals = 0 }) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
@@ -85,6 +85,7 @@ export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [testimonialSlide, setTestimonialSlide] = useState(0);
+  const [aboutSlide, setAboutSlide] = useState(0);
   const [activeStep, setActiveStep] = useState(null);
   const [activeFeature, setActiveFeature] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -92,7 +93,6 @@ export default function LandingPage() {
 
   const logoPath = "/assets/images/web_logo.png";
   const heroImagePath = "/assets/images/web_asset1.jpg";
-  const aboutImagePath = "/assets/images/about_us.png";
 
   const features = [
     { icon: <Zap size={32} />, title: "3000+ Commands", desc: "AI, Downloaders, Games, Moderation, and more. Everything you need in one bot." },
@@ -111,6 +111,33 @@ export default function LandingPage() {
     { text: "The downloader features are lightning fast. YouTube, TikTok, Instagram — no issues.", name: "Michael T.", role: "Student", img: "https://i.pravatar.cc/150?img=15" },
     { text: "The dashboard makes it so easy to toggle features on and off. I love it.", name: "Grace E.", role: "Influencer", img: "https://i.pravatar.cc/150?img=20" },
     { text: "Absolutely fantastic! The AI chatbot feature is scary good.", name: "Peter S.", role: "Tech Enthusiast", img: "https://i.pravatar.cc/150?img=60" }
+  ];
+
+  const aboutTeam = [
+    { 
+      name: "Wally Jay", 
+      role: "Creator & Lead Developer", 
+      img: "/assets/images/about_us.png", 
+      desc: "A 22-year-old professional web developer with a deep passion for coding. His vision for WALLYJAYTECH-MD is to make WhatsApp easier and more fun to use through intelligent automation — creating a powerful, accessible bot that enhances everyday messaging for communities, creators, and businesses worldwide." 
+    },
+    { 
+      name: "Anonymous", 
+      role: "Bot Tester Expert", 
+      img: "/assets/images/anonymous.png", 
+      desc: "An expert in identifying hidden bugs and pushing the bot to its limits. Anonymous ensures that every feature works flawlessly before it reaches the public, providing critical feedback that keeps the bot running at peak performance." 
+    },
+    { 
+      name: "Winne Tech", 
+      role: "Quality Assurance & Tester", 
+      img: "/assets/images/winnertech.png", 
+      desc: "Specializes in making sure the bot's features meet what people actually want. Winne Tech rigorously tests every update for better improvement, ensuring the user experience is smooth, intuitive, and highly reliable." 
+    },
+    { 
+      name: "Young Cash", 
+      role: "Beta Tester", 
+      img: "/assets/images/youngcash.png", 
+      desc: "A dedicated tester who explores the bot from a user's perspective. Young Cash helps verify that the latest features are not only functional but also deliver the best possible experience for every group and community." 
+    }
   ];
 
   const phoneFeatures = [
@@ -132,7 +159,6 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [testimonials.length]);
 
-  // Auto-hide scroll to top after 3 seconds
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(true);
@@ -279,65 +305,48 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* MEET THE CREATOR (NEW) */}
-        <section className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-5xl font-black mb-12">About Us</h2>
-            <div className="flex flex-col items-center">
-              <img 
-                src={aboutImagePath} 
-                alt="Wally Jay" 
-                className="w-40 h-40 rounded-full object-cover border-4 border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] mb-6"
-              />
-              <h3 className="text-2xl font-bold mb-4">Wally Jay</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto text-lg">
-                I am a 22-year-old professional web developer with a deep passion for coding. My dream is to make WhatsApp easier and more fun to use through intelligent automation. WALLYJAYTECH-MD was born from this vision — to create a powerful, accessible bot that enhances everyday messaging for communities, creators, and businesses worldwide.
-              </p>
-            </div>
-          </div>
-        </section>
-
         {/* FEATURE HIGHLIGHTS & REALISTIC PHONE MOCKUP */}
-        <section className="py-24 max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl md:text-5xl font-black mb-6">Why Choose WALLYJAYTECH-MD?</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {phoneFeatures.map((f, i) => (
-                <div 
-                  key={i}
-                  onClick={() => setActiveFeature(i)}
-                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer font-semibold text-sm ${
-                    activeFeature === i 
-                      ? 'border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700]' 
-                      : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  <Star size={16} className={activeFeature === i ? "text-[#FFD700] fill-[#FFD700]" : "text-gray-400"} /> {f}
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* REALISTIC PHONE MOCKUP */}
-          <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
-            <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
-                <img src={logoPath} alt="Bot" className="w-full h-full rounded-full object-contain" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">WALLYJAYTECH-MD</h4>
-                <p className="text-[10px] text-gray-200">Online</p>
+        <section className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-5xl font-black mb-6">Why Choose WALLYJAYTECH-MD?</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {phoneFeatures.map((f, i) => (
+                  <div 
+                    key={i}
+                    onClick={() => setActiveFeature(i)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer font-semibold text-sm ${
+                      activeFeature === i 
+                        ? 'border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700]' 
+                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] text-gray-600 dark:text-gray-400'
+                    }`}
+                  >
+                    <Star size={16} className={activeFeature === i ? "text-[#FFD700] fill-[#FFD700]" : "text-gray-400"} /> {f}
+                  </div>
+                ))}
               </div>
             </div>
             
-            <div className="flex-grow bg-[#E5DDD5] dark:bg-[#0b141a] p-3 overflow-y-auto flex flex-col gap-3">
-              <div className="bg-[#DCF8C6] dark:bg-[#005c4b] p-3 rounded-xl rounded-tr-none shadow-sm text-xs self-end max-w-[85%] text-black dark:text-white relative">
-                .menu
-                <span className="text-[8px] text-gray-500 absolute bottom-1 right-2 flex items-center gap-1">12:00 PM <CheckCheck size={10} className="text-blue-500"/></span>
+            {/* REALISTIC PHONE MOCKUP */}
+            <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
+              <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
+                  <img src={logoPath} alt="Bot" className="w-full h-full rounded-full object-contain" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">WALLYJAYTECH-MD</h4>
+                  <p className="text-[10px] text-gray-200">Online</p>
+                </div>
               </div>
               
-              <div className="bg-white dark:bg-[#202c33] p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] self-start max-w-[95%] text-black dark:text-white font-mono whitespace-pre-wrap leading-tight">
-{`🌀◈── 𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃 ──◈❃🌸❃
+              <div className="flex-grow bg-[#E5DDD5] dark:bg-[#0b141a] p-3 overflow-y-auto flex flex-col gap-3">
+                <div className="bg-[#DCF8C6] dark:bg-[#005c4b] p-3 rounded-xl rounded-tr-none shadow-sm text-xs self-end max-w-[85%] text-black dark:text-white relative">
+                  .menu
+                  <span className="text-[8px] text-gray-500 absolute bottom-1 right-2 flex items-center gap-1">12:00 PM <CheckCheck size={10} className="text-blue-500"/></span>
+                </div>
+                
+                <div className="bg-white dark:bg-[#202c33] p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] self-start max-w-[95%] text-black dark:text-white font-mono whitespace-pre-wrap leading-tight">
+{`🌀◈── *𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃* ──◈❃🌸❃
 
 ╭──────────●●➤
 ┊ ❶ 𝙰𝚒 𝙼𝚎𝚗𝚞
@@ -357,27 +366,28 @@ export default function LandingPage() {
 ┊ ⓯ 𝚃𝚘𝚘𝚕𝚜 𝙼𝚎𝚗𝚞
 ╰──────·••─────•────●○
 
-            © 2025-2026
+              *© 2025-2026*
 
 ╭──────────●●➤
-┊ 𝚆𝙰𝙻𝙻𝚈𝙹𝙰𝚈𝚃𝙴𝙲𝙷-𝙼𝙳
+┊ *𝚆𝙰𝙻𝙻𝚈𝙹𝙰𝚈𝚃𝙴𝙲𝙷-𝙼𝙳*
 ╰──────·••─────•────●○`}
+                </div>
               </div>
-            </div>
-            
-            <div className="bg-[#f0f0f0] dark:bg-[#2a3942] p-2 flex items-center gap-2">
-              <div className="flex-grow bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 flex items-center gap-2 border border-gray-300 dark:border-gray-600">
-                <span className="text-gray-400 text-xs">Type a message...</span>
+              
+              <div className="bg-[#f0f0f0] dark:bg-[#2a3942] p-2 flex items-center gap-2">
+                <div className="flex-grow bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 flex items-center gap-2 border border-gray-300 dark:border-gray-600">
+                  <span className="text-gray-400 text-xs">Type a message...</span>
+                </div>
+                <button className="p-2 text-gray-500"><Camera size={20} /></button>
+                <button className="p-2 text-gray-500"><Mic size={20} /></button>
+                <button className="p-2 bg-[#00a884] text-white rounded-full shadow-md"><Send size={18} /></button>
               </div>
-              <button className="p-2 text-gray-500"><Camera size={20} /></button>
-              <button className="p-2 text-gray-500"><Mic size={20} /></button>
-              <button className="p-2 bg-[#00a884] text-white rounded-full shadow-md"><Send size={18} /></button>
             </div>
           </div>
         </section>
 
         {/* FEATURES CAROUSEL */}
-        <section id="features" className="py-24 overflow-hidden bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
+        <section id="features" className="py-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Everything you need.</h2>
@@ -397,7 +407,7 @@ export default function LandingPage() {
               >
                 {features.map((f, i) => (
                   <div key={i} className="min-w-full md:min-w-[50%] lg:min-w-[33.333%] px-3">
-                    <div className="p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors group h-full flex flex-col">
+                    <div className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors group h-full flex flex-col">
                       <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/10 text-[#FFD700] flex items-center justify-center mb-6 group-hover:bg-[#FFD700] group-hover:text-black transition-all flex-shrink-0">
                         {f.icon}
                       </div>
@@ -417,8 +427,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* HOW IT WORKS (Professional Steps) */}
-        <section id="how-it-works" className="py-24">
+        {/* HOW IT WORKS (No Step Numbers) */}
+        <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Start in 3 steps.</h2>
@@ -427,9 +437,9 @@ export default function LandingPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
-                { step: "01", icon: <UserPlus size={32} />, title: "Create Account", desc: "Sign up securely with your email and phone number to access your dashboard." },
-                { step: "02", icon: <QrCode size={32} />, title: "Connect Bot", desc: "Scan the QR code or use a pairing code to link your WhatsApp instantly." },
-                { step: "03", icon: <Settings size={32} />, title: "Manage Features", desc: "Toggle AI, Antilink, and other settings on or off directly from your dashboard." }
+                { icon: <UserPlus size={32} />, title: "Create Account", desc: "Sign up securely with your email and phone number to access your dashboard." },
+                { icon: <QrCode size={32} />, title: "Connect Bot", desc: "Scan the QR code or use a pairing code to link your WhatsApp instantly." },
+                { icon: <Settings size={32} />, title: "Manage Features", desc: "Toggle AI, Antilink, and other settings on or off directly from your dashboard." }
               ].map((s, i) => (
                 <div 
                   key={i} 
@@ -452,7 +462,7 @@ export default function LandingPage() {
         </section>
 
         {/* TESTIMONIALS (8 Slides) */}
-        <section id="testimonials" className="py-24 overflow-hidden bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
+        <section id="testimonials" className="py-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
               <h2 className="text-3xl md:text-5xl font-black">Trusted by Thousands Worldwide</h2>
@@ -473,7 +483,7 @@ export default function LandingPage() {
               >
                 {testimonials.map((t, i) => (
                   <div key={i} className="min-w-full md:min-w-[50%] px-3">
-                    <div className="p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 h-full flex flex-col">
+                    <div className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 h-full flex flex-col">
                       <div className="flex gap-1 mb-4 text-[#FFD700]">
                         <Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" />
                       </div>
@@ -499,7 +509,74 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* NEWSLETTER SUBSCRIPTION */}
+        {/* ABOUT US / TEAM (Manual Slider) */}
+        <section className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-5xl font-black mb-4">About Us</h2>
+              <p className="text-gray-500 dark:text-gray-400">The passionate team behind WALLYJAYTECH-MD.</p>
+            </div>
+
+            {/* Slider Container */}
+            <div className="relative">
+              <div className="overflow-hidden py-4">
+                <motion.div 
+                  className="flex cursor-grab active:cursor-grabbing"
+                  animate={{ x: `-${aboutSlide * 100}%` }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  onDragEnd={(e, { offset }) => {
+                    if (offset.x < -50 && aboutSlide < aboutTeam.length - 1) setAboutSlide(aboutSlide + 1);
+                    else if (offset.x > 50 && aboutSlide > 0) setAboutSlide(aboutSlide - 1);
+                  }}
+                >
+                  {aboutTeam.map((member, i) => (
+                    <div key={i} className="min-w-full px-4 flex justify-center">
+                      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-3xl p-8 md:p-12 max-w-2xl w-full flex flex-col items-center text-center shadow-lg">
+                        <img 
+                          src={member.img} 
+                          alt={member.name} 
+                          className="w-32 h-32 rounded-full object-cover border-4 border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] mb-6"
+                        />
+                        <h3 className="text-2xl font-bold mb-1">{member.name}</h3>
+                        <p className="text-[#FFD700] font-semibold mb-4">{member.role}</p>
+                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                          {member.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
+              
+              {/* Manual Navigation Buttons */}
+              <button 
+                onClick={() => setAboutSlide(prev => Math.max(0, prev - 1))}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 md:-ml-6 p-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-full hover:bg-[#FFD700] hover:text-black hover:border-[#FFD700] transition-all shadow-md z-10"
+                disabled={aboutSlide === 0}
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <button 
+                onClick={() => setAboutSlide(prev => Math.min(aboutTeam.length - 1, prev + 1))}
+                className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 md:-mr-6 p-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-full hover:bg-[#FFD700] hover:text-black hover:border-[#FFD700] transition-all shadow-md z-10"
+                disabled={aboutSlide === aboutTeam.length - 1}
+              >
+                <ChevronRight size={24} />
+              </button>
+            </div>
+
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-8">
+              {aboutTeam.map((_, i) => (
+                <button key={i} onClick={() => setAboutSlide(i)} className={`w-3 h-3 rounded-full transition-all ${aboutSlide === i ? 'bg-[#FFD700] w-8' : 'bg-gray-300 dark:bg-gray-700'}`} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* NEWSLETTER SUBSCRIPTION (Under Get Started) */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto bg-black dark:bg-[#111] rounded-3xl p-8 md:p-12 border border-gray-800 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-10 blur-[80px] rounded-full"></div>
