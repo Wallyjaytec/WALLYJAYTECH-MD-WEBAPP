@@ -159,14 +159,23 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, [testimonials.length]);
 
+  // Auto-hide scroll to top & close menu on scroll
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(true);
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-      
-      scrollTimeout.current = setTimeout(() => {
+      // Close menu on scroll
+      setIsMenuOpen(false);
+
+      // Show button logic
+      const scrollY = window.scrollY;
+      if (scrollY > 400) {
+        setShowScrollTop(true);
+        if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          setShowScrollTop(false);
+        }, 3000);
+      } else {
         setShowScrollTop(false);
-      }, 3000);
+      }
     };
     
     window.addEventListener("scroll", handleScroll);
@@ -199,21 +208,31 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <button className="md:hidden p-2 z-50" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
 
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="md:hidden absolute w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 shadow-xl">
-              <div className="flex flex-col p-4 space-y-4 font-bold text-lg">
-                <a href="#features" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Features</a>
-                <a href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">How it Works</a>
-                <a href="#testimonials" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Reviews</a>
-                <Link href="/dashboard" className="bg-[#FFD700] text-black text-center py-3 rounded-xl mt-4">Login / Sign Up</Link>
-              </div>
-            </motion.div>
+            <>
+              {/* Invisible overlay to catch clicks outside menu */}
+              <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsMenuOpen(false)}></div>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }} 
+                className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 shadow-xl z-50"
+              >
+                <div className="flex flex-col p-4 space-y-4 font-bold text-lg">
+                  <a href="#features" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Features</a>
+                  <a href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">How it Works</a>
+                  <a href="#testimonials" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Reviews</a>
+                  <Link href="/dashboard" className="bg-[#FFD700] text-black text-center py-3 rounded-xl mt-4">Login / Sign Up</Link>
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </nav>
@@ -327,7 +346,7 @@ export default function LandingPage() {
               </div>
             </div>
             
-            {/* REALISTIC PHONE MOCKUP */}
+            {/* REALISTIC PHONE MOCKUP (Asterisks Removed) */}
             <div className="relative mx-auto w-full max-w-[320px] h-[650px] bg-black rounded-[40px] border-[10px] border-gray-900 shadow-2xl overflow-hidden flex flex-col">
               <div className="bg-[#075E54] p-3 text-white flex items-center gap-3 shadow-md z-10">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
@@ -346,7 +365,7 @@ export default function LandingPage() {
                 </div>
                 
                 <div className="bg-white dark:bg-[#202c33] p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] self-start max-w-[95%] text-black dark:text-white font-mono whitespace-pre-wrap leading-tight">
-{`🌀◈── *𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃* ──◈❃🌸❃
+{`🌀◈── 𝙼𝙴𝙽𝚄 𝙻𝙸𝚂𝚃 ──◈❃🌸❃
 
 ╭──────────●●➤
 ┊ ❶ 𝙰𝚒 𝙼𝚎𝚗𝚞
@@ -366,10 +385,10 @@ export default function LandingPage() {
 ┊ ⓯ 𝚃𝚘𝚘𝚕𝚜 𝙼𝚎𝚗𝚞
 ╰──────·••─────•────●○
 
-              *© 2025-2026*
+            © 2025-2026
 
 ╭──────────●●➤
-┊ *𝚆𝙰𝙻𝙻𝚈𝙹𝙰𝚈𝚃𝙴𝙲𝙷-𝙼𝙳*
+┊ 𝚆𝙰𝙻𝙻𝚈𝙹𝙰𝚈𝚃𝙴𝙲𝙷-𝙼𝙳
 ╰──────·••─────•────●○`}
                 </div>
               </div>
@@ -576,7 +595,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* NEWSLETTER SUBSCRIPTION (Under Get Started) */}
+        {/* NEWSLETTER SUBSCRIPTION */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto bg-black dark:bg-[#111] rounded-3xl p-8 md:p-12 border border-gray-800 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-10 blur-[80px] rounded-full"></div>
@@ -685,7 +704,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* AUTO SCROLL TO TOP BUTTON (Auto-hides after 3 seconds) */}
+      {/* AUTO SCROLL TO TOP BUTTON (Auto-hides immediately at top) */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
