@@ -23,7 +23,6 @@ const GoogleIcon = ({ size = 20, className = "" }) => (
   </svg>
 );
 
-// Countries with their expected phone number length
 const countries = [
   { name: "Select Country", code: "", flag: "", phoneLength: 0 },
   { name: "Nigeria", code: "+234", flag: "🇳🇬", phoneLength: 10 },
@@ -43,7 +42,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Auth State
   const [isLogin, setIsLogin] = useState(false); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,7 +57,6 @@ export default function Dashboard() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
-  // Bot Settings State
   const [settings, setSettings] = useState({
     bot_connected: true,
     ai_enabled: true,
@@ -72,23 +69,33 @@ export default function Dashboard() {
   });
 
   // --- VALIDATION FUNCTIONS ---
-
-  // Username: 5+ letters first, then optional numbers. No symbols, no letters after numbers.
   const validateUsername = (name) => /^[a-zA-Z]{5,}[0-9]*$/.test(name);
-
-  // Name: Only letters (A-Z, a-z), no spaces, no numbers.
   const validateName = (name) => /^[a-zA-Z]+$/.test(name);
-
-  // Email: Must be @gmail.com. Starts with letters, may end with numbers before @.
   const validateEmail = (email) => /^[a-zA-Z]{1,}[0-9]*@gmail\.com$/.test(email);
-
-  // Password: 8+ chars, at least 1 letter, at least 1 number.
-  const validatePassword = (pass) => /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(pass);
-
-  // Phone: Must match the country's expected length.
   const validatePhone = (number, countryLength) => number.length === countryLength;
 
+  // Professional Password: 8+ chars, 1 upper, 1 lower, 1 number, 1 symbol
+  const validatePassword = (pass) => {
+    const hasUpper = /[A-Z]/.test(pass);
+    const hasLower = /[a-z]/.test(pass);
+    const hasNumber = /[0-9]/.test(pass);
+    const hasSymbol = /[!@#$%^&*(),.?":{}|<>_\-]/.test(pass);
+    const isLongEnough = pass.length >= 8;
+    return hasUpper && hasLower && hasNumber && hasSymbol && isLongEnough;
+  };
+
+  const getPasswordErrorMessage = (pass) => {
+    const errors = [];
+    if (pass.length < 8) errors.push("at least 8 characters");
+    if (!/[A-Z]/.test(pass)) errors.push("1 uppercase letter");
+    if (!/[a-z]/.test(pass)) errors.push("1 lowercase letter");
+    if (!/[0-9]/.test(pass)) errors.push("1 number");
+    if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(pass)) errors.push("1 symbol");
+    return "Password must contain: " + errors.join(", ") + ".";
+  };
+
   useEffect(() => {
+    // Load session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) fetchSettings(session.user.id);
@@ -103,6 +110,23 @@ export default function Dashboard() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- REMEMBER ME LOGIC ---
+  // If "remember me" was NOT checked on login, clear the session on page refresh
+  useEffect(() => {
+    const shouldPersist = sessionStorage.getItem("remember_me");
+    // If user previously logged in without remember me, force logout on refresh
+    if (shouldPersist === "false") {
+      // Keep them logged in during the session, but on a fresh page load (new tab), log out
+      const isNewSession = !sessionStorage.getItem("session_active");
+      if (isNewSession) {
+        supabase.auth.signOut();
+        sessionStorage.removeItem("remember_me");
+      } else {
+        sessionStorage.setItem("session_active", "true");
+      }
+    }
+  }, []);
+
   const fetchSettings = async (userId) => {
     const { data, error } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
     if (data) setSettings(data);
@@ -115,7 +139,8 @@ export default function Dashboard() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
+    sessionStorage.clear();
     router.push("/");
   };
 
@@ -137,9 +162,9 @@ export default function Dashboard() {
       if (!validateName(firstName)) return setAuthError("First name must contain only letters.");
       if (!validateName(lastName)) return setAuthError("Last name must contain only letters.");
       if (!validateUsername(username)) return setAuthError("Username must be 5+ letters, followed by optional numbers only. No symbols.");
-      if (!validateEmail(email)) return setAuthError("Email must end with @gmail.com and start with letters, optional numbers.");
+      if (!validateEmail(email)) return setAuthError("Email must end with @gmail.com and start with letters.");
       if (!validatePhone(phone, selectedCountry.phoneLength)) return setAuthError(`Phone number must be exactly ${selectedCountry.phoneLength} digits for ${selectedCountry.name}.`);
-      if (!validatePassword(password)) return setAuthError("Password must be at least 8 characters long and include both letters and numbers.");
+      if (!validatePassword(password)) return setAuthError(getPasswordErrorMessage(password));
       if (password !== confirmPassword) return setAuthError("Passwords do not match.");
       if (!selectedCountry.code) return setAuthError("Please select a country.");
       if (!agreedToTerms) return setAuthError("You must agree to the Terms of Service and Privacy Policy.");
@@ -166,23 +191,16 @@ export default function Dashboard() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) { setAuthError(error.message); return; }
       
-      // Remember Me
-      if (!rememberMe) {
-        localStorage.setItem("temp_session", "true");
+      // Remember Me: save preference
+      if (rememberMe) {
+        sessionStorage.setItem("remember_me", "true");
       } else {
-        localStorage.removeItem("temp_session");
+        sessionStorage.setItem("remember_me", "false");
+        // Session will be cleared on page refresh via the useEffect above
       }
+      sessionStorage.setItem("session_active", "true");
     }
   };
-
-  // Handle "Remember Me" on browser reload
-  useEffect(() => {
-    const temp = localStorage.getItem("temp_session");
-    if (temp === "true") {
-      localStorage.removeItem("temp_session");
-      supabase.auth.signOut();
-    }
-  }, []);
 
   if (loading) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
@@ -195,9 +213,11 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative">
           <Link href="/" className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"><X size={20} /></Link>
           
-          <div className="flex justify-center mb-4">
-            <img src="/assets/images/web_logo.png" alt="Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.3)] object-contain bg-black p-2" />
-          </div>
+          {/* Logo now links to homepage */}
+          <Link href="/" className="flex justify-center mb-4">
+            <img src="/assets/images/web_logo.png" alt="Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.3)] object-contain bg-black p-2 hover:scale-105 transition-transform" />
+          </Link>
+          
           <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">WALLYJAYTECH-MD</h1>
           <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">{isLogin ? "Login to your dashboard" : "Create your dashboard"}</p>
           
@@ -309,7 +329,6 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-white dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans transition-colors duration-300">
       
-      {/* MOBILE HEADER */}
       <div className="md:hidden fixed top-0 left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 z-50 flex justify-between items-center p-4">
         <div className="flex items-center gap-2">
           <img src="/assets/images/web_logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-black p-0.5" />
@@ -320,7 +339,6 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* MOBILE SIDEBAR - SLIDES FROM RIGHT */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -371,7 +389,6 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* DESKTOP SIDEBAR */}
       <aside className="w-64 bg-gray-50 dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800">
           <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
@@ -404,7 +421,6 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto relative pt-16 md:pt-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#FFD700] opacity-5 blur-[100px] rounded-full pointer-events-none"></div>
 
@@ -425,7 +441,6 @@ export default function Dashboard() {
             
             {activeTab === 'dashboard' && (
               <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}}>
-                {/* WELCOME BANNER */}
                 <div className="relative bg-black dark:bg-[#111] rounded-3xl p-8 mb-8 overflow-hidden border border-gray-800 shadow-2xl">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-20 blur-[80px] rounded-full"></div>
                   <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -444,7 +459,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* STATS GRID */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
                   <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-[#FFD700]/50 transition-colors">
                     <div className="flex justify-between items-start mb-4">
@@ -479,9 +493,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* ACTIVITY & CHART */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* CHART MOCKUP */}
                   <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-3xl">
                     <h3 className="text-lg font-bold mb-6">Weekly Message Activity</h3>
                     <div className="flex items-end justify-between h-48 gap-2">
@@ -496,7 +508,6 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* RECENT ACTIVITY FEED */}
                   <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-3xl">
                     <h3 className="text-lg font-bold mb-6 flex justify-between items-center">
                       Recent Activity 
