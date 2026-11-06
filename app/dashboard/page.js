@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Cpu, MessageSquare, ChevronRight, Mail, 
   User, Lock, Eye, EyeOff, Globe, Phone, X, ChevronDown,
   Users, Download, Power, RefreshCw, Key, Bell, TrendingUp, 
-  ArrowUpRight, ArrowDownRight, Play, Terminal
+  ArrowUpRight, ArrowDownRight, Play, Terminal, Menu
 } from "lucide-react";
 
 // --- SVG GOOGLE ICON ---
@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Menu State
   
   // Auth State
   const [isLogin, setIsLogin] = useState(false); 
@@ -222,7 +223,68 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-white dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans transition-colors duration-300">
       
-      {/* SIDEBAR */}
+      {/* MOBILE HEADER */}
+      <div className="md:hidden fixed top-0 left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 z-50 flex justify-between items-center p-4">
+        <div className="flex items-center gap-2">
+          <img src="/assets/images/web_logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-black p-0.5" />
+          <span className="font-black text-lg">WALLYJAY</span>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-gray-600 dark:text-gray-300">
+          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
+      </div>
+
+      {/* MOBILE SIDEBAR OVERLAY */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="md:hidden fixed inset-0 bg-black/50 z-40"
+            />
+            <motion.aside 
+              initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }}
+              className="md:hidden fixed top-0 left-0 h-full w-64 bg-white dark:bg-[#0a0a0a] z-50 border-r border-gray-200 dark:border-gray-800 flex flex-col"
+            >
+              <div className="p-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center gap-3">
+                  <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
+                  <div>
+                    <h1 className="font-black text-lg">WALLYJAY</h1>
+                    <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">TECH-MD</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)}><X size={24} /></button>
+              </div>
+
+              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                <Link href="/deploy" className="flex items-center justify-between w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)] mb-6">
+                  <div className="flex items-center gap-3"><Bot size={20} /> <span>Deploy New Bot</span></div>
+                  <ChevronRight size={16} />
+                </Link>
+                <SidebarItem icon={<LayoutDashboard size={20}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem icon={<Cpu size={20}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => { setActiveTab('ai'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem icon={<Users size={20}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => { setActiveTab('groups'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem icon={<Download size={20}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => { setActiveTab('downloads'); setIsMobileMenuOpen(false); }} />
+                <SidebarItem icon={<Settings size={20}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => { setActiveTab('controls'); setIsMobileMenuOpen(false); }} />
+                <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+                  <SidebarItem icon={<CreditCard size={20}/>} label="Billing" active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} />
+                  <SidebarItem icon={<User size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} />
+                </div>
+              </nav>
+
+              <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+                <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-3 w-full p-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold">
+                  <LogOut size={20} /> Logout
+                </button>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* DESKTOP SIDEBAR */}
       <aside className="w-64 bg-gray-50 dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800">
           <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
@@ -233,14 +295,10 @@ export default function Dashboard() {
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {/* DEPLOY NEW BOT BUTTON */}
           <Link href="/deploy" className="flex items-center justify-between w-full p-3 rounded-xl bg-[#FFD700] text-black font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform mb-6">
-            <div className="flex items-center gap-3">
-              <Bot size={20} /> <span>Deploy New Bot</span>
-            </div>
+            <div className="flex items-center gap-3"><Bot size={20} /> <span>Deploy New Bot</span></div>
             <ChevronRight size={16} />
           </Link>
-
           <SidebarItem icon={<LayoutDashboard size={20}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <SidebarItem icon={<Cpu size={20}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
           <SidebarItem icon={<Users size={20}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => setActiveTab('groups')} />
@@ -260,7 +318,7 @@ export default function Dashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto relative">
+      <main className="flex-1 overflow-y-auto relative pt-16 md:pt-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#FFD700] opacity-5 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="p-6 md:p-10 relative z-10">
@@ -270,7 +328,7 @@ export default function Dashboard() {
               <h2 className="text-3xl font-bold capitalize">{activeTab === 'dashboard' ? 'Overview' : activeTab}</h2>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Welcome back, {settings.first_name || session.user.email.split('@')[0]}</p>
             </div>
-            <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#111] px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800">
+            <div className="hidden md:flex items-center gap-3 bg-gray-50 dark:bg-[#111] px-4 py-2 rounded-full border border-gray-200 dark:border-gray-800">
                <span className={`w-2 h-2 rounded-full ${settings.bot_connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
                <span className="text-xs font-mono">{settings.bot_connected ? 'BOT ONLINE' : 'BOT OFFLINE'}</span>
             </div>
@@ -288,11 +346,11 @@ export default function Dashboard() {
                       <h3 className="text-2xl font-black text-white mb-2">Your Bot is Online 🚀</h3>
                       <p className="text-gray-400">Everything is running smoothly. You have <b className="text-[#FFD700]">{settings.plan_type}</b> access.</p>
                     </div>
-                    <div className="flex gap-3">
-                      <button className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                      <button className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(255,215,0,0.3)]">
                         <RefreshCw size={16} /> Restart Bot
                       </button>
-                      <button className="bg-white/10 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/20 transition-all text-sm flex items-center gap-2 border border-white/20">
+                      <button className="bg-white/10 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/20 transition-all text-sm flex items-center justify-center gap-2 border border-white/20">
                         <Terminal size={16} /> View Logs
                       </button>
                     </div>
@@ -300,7 +358,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* STATS GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
                   <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-[#FFD700]/50 transition-colors">
                     <div className="flex justify-between items-start mb-4">
                       <div className="p-3 bg-[#FFD700]/10 text-[#FFD700] rounded-xl"><MessageSquare size={24}/></div>
