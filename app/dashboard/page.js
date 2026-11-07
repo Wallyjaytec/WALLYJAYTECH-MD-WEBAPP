@@ -72,10 +72,10 @@ export default function Dashboard() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut({ scope: 'local' });
-    sessionStorage.clear();
-    router.push("/login");
-  };
+  router.push("/login");
+  await supabase.auth.signOut({ scope: 'local' });
+  sessionStorage.clear();
+};
 
   if (loading || !mounted) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
