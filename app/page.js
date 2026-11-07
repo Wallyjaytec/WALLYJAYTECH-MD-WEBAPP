@@ -204,7 +204,7 @@ export default function LandingPage() {
               </button>
             )}
 
-            <Link href="/dashboard" className="bg-[#FFD700] text-black px-6 py-2 rounded-full hover:bg-yellow-500 transition-all font-bold">
+            <Link href="/login" className="bg-[#FFD700] text-black px-6 py-2 rounded-full hover:bg-yellow-500 transition-all font-bold">
               Login / Dashboard
             </Link>
           </div>
@@ -230,7 +230,7 @@ export default function LandingPage() {
                   <a href="#features" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Features</a>
                   <a href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">How it Works</a>
                   <a href="#testimonials" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Reviews</a>
-                  <Link href="/dashboard" className="bg-[#FFD700] text-black text-center py-3 rounded-xl mt-4">Login / Sign Up</Link>
+                  <Link href="/login" className="bg-[#FFD700] text-black text-center py-3 rounded-xl mt-4">Login / Sign Up</Link>
                 </div>
               </motion.div>
             </>
@@ -267,7 +267,7 @@ export default function LandingPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/dashboard" className="flex items-center justify-center gap-2 bg-[#FFD700] text-black font-black px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+              <Link href="/signup" className="flex items-center justify-center gap-2 bg-[#FFD700] text-black font-black px-8 py-4 rounded-xl hover:bg-yellow-500 transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)]">
                 Get Started Now <ArrowRight size={20} />
               </Link>
               <a href="#how-it-works" className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-gray-800 font-bold px-8 py-4 rounded-xl hover:bg-gray-200 dark:hover:bg-[#1a1a1a] transition-all">
@@ -603,7 +603,7 @@ export default function LandingPage() {
               <h2 className="text-3xl md:text-4xl font-black text-black mb-2">Ready to experience the best WhatsApp bot?</h2>
               <p className="text-black/80 font-medium text-lg">Join thousands of users today and transform your messaging.</p>
             </div>
-            <Link href="/dashboard" className="relative z-10 bg-black text-white font-black px-8 py-4 rounded-xl hover:bg-gray-800 transition-all whitespace-nowrap shadow-xl">Get Started Now</Link>
+            <Link href="/signup" className="relative z-10 bg-black text-white font-black px-8 py-4 rounded-xl hover:bg-gray-800 transition-all whitespace-nowrap shadow-xl">Get Started Now</Link>
           </div>
         </section>
 
@@ -655,7 +655,7 @@ export default function LandingPage() {
                 <h4 className="font-bold mb-4">Product</h4>
                 <ul className="flex flex-col space-y-2 text-sm text-gray-500 dark:text-gray-400">
                   <li><a href="#features" className="hover:text-[#FFD700]">Features</a></li>
-                  <li><Link href="/dashboard" className="hover:text-[#FFD700]">Dashboard</Link></li>
+                  <li><Link href="/login" className="hover:text-[#FFD700]">Dashboard</Link></li>
                   <li><a href="#" className="hover:text-[#FFD700]">Pricing</a></li>
                 </ul>
               </div>
