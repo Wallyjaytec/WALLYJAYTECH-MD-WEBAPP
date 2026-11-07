@@ -110,14 +110,12 @@ export default function Dashboard() {
         return;
       }
 
-      // Verify the user still exists in user_settings table
       const { data: profile } = await supabase
         .from('user_settings')
         .select('user_id')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      // If profile is missing, the user was deleted by admin → force logout
       if (!profile) {
         await supabase.auth.signOut({ scope: 'local' });
         sessionStorage.clear();
@@ -146,7 +144,6 @@ export default function Dashboard() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- POLL EVERY 60s TO DETECT DELETED USERS ---
   useEffect(() => {
     if (!session) return;
 
@@ -158,7 +155,6 @@ export default function Dashboard() {
         .maybeSingle();
 
       if (!profile) {
-        // User deleted mid-session → force logout immediately
         await supabase.auth.signOut({ scope: 'local' });
         sessionStorage.clear();
         localStorage.clear();
@@ -189,12 +185,16 @@ export default function Dashboard() {
   const handleForgotPassword = async () => {
     if (!email) return setAuthError("Please enter your email to reset password.");
     
+    // Sign out locally first so the old Chrome tab doesn't stay logged in!
+    await supabase.auth.signOut({ scope: 'local' });
+    sessionStorage.clear();
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, { 
       redirectTo: `${window.location.origin}/reset-password` 
     });
     
     if (error) setAuthError(error.message);
-    else setAuthError("If an account exists, a password reset link has been sent to your email.");
+    else setAuthError("If your email is registered, you will receive a password reset link. Please check your inbox and spam folder.");
   };
 
   const checkAvailability = async () => {
@@ -240,7 +240,6 @@ export default function Dashboard() {
           throw new Error("This email is already registered. Please log in instead.");
         }
 
-        // Insert profile row
         const { error: insertError } = await supabase.from('user_settings').insert({
           user_id: data.user.id,
           first_name: firstName,
@@ -285,7 +284,7 @@ export default function Dashboard() {
   // ==========================================
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#050505] p-4 py-10 font-sans transition-colors duration-300 relative">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#050505] p-4 py-10 font-sans transition-colors duration-300 relative overflow-x-hidden">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative">
           <Link href="/" className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"><X size={20} /></Link>
           
@@ -296,7 +295,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">WALLYJAYTECH-MD</h1>
           <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">{isLogin ? "Login to your dashboard" : "Create your dashboard"}</p>
           
-          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.startsWith("Verify") || authError.startsWith("If an account exists") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
+          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.includes("Verify") || authError.includes("Password reset link") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
 
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
@@ -402,7 +401,7 @@ export default function Dashboard() {
   // 2. PROFESSIONAL DASHBOARD
   // ==========================================
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-[#050505] text-black dark:text-white overflow-hidden font-sans">
+    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#050505] text-black dark:text-white font-sans">
       
       {/* MOBILE HEADER */}
       <div className="md:hidden fixed top-0 left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 z-50 flex justify-between items-center px-4 py-3">
@@ -535,10 +534,10 @@ export default function Dashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto relative pt-16 md:pt-0">
+      <main className="flex-1 overflow-y-auto relative pt-16 md:pt-0 w-full overflow-x-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#FFD700] opacity-5 blur-[120px] rounded-full pointer-events-none"></div>
 
-        <div className="p-4 md:p-8 relative z-10 max-w-7xl mx-auto">
+        <div className="p-4 md:p-8 relative z-10 max-w-7xl mx-auto w-full">
           
           <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
             <div>
@@ -557,11 +556,6 @@ export default function Dashboard() {
                 <span className={`w-2 h-2 rounded-full ${settings.bot_connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
                 <span className="text-xs font-bold">{settings.bot_connected ? 'BOT ONLINE' : 'BOT OFFLINE'}</span>
               </div>
-              {mounted && (
-                <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-full bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
-                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
-              )}
               <button className="p-2 rounded-full bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
                 <Bell size={18} />
               </button>
