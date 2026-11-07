@@ -53,8 +53,12 @@ export default function Dashboard() {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) checkSession();
-      else { setSession(null); router.push("/login"); }
+      if (session) {
+        checkSession();
+      } else {
+        setSession(null);
+        router.push("/login");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -71,11 +75,12 @@ export default function Dashboard() {
     if(session?.user) await supabase.from('user_settings').update({ [feature]: newValue }).eq('user_id', session.user.id);
   };
 
+  // --- FIX: Redirect BEFORE signing out to prevent React crash ---
   const handleLogout = async () => {
-  router.push("/login");
-  await supabase.auth.signOut({ scope: 'local' });
-  sessionStorage.clear();
-};
+    router.push("/login");
+    await supabase.auth.signOut({ scope: 'local' });
+    sessionStorage.clear();
+  };
 
   if (loading || !mounted) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
