@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -53,6 +54,8 @@ export default function Dashboard() {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isLoggingOut) return; // Ignore auth changes if logging out
+      
       if (session) {
         checkSession();
       } else {
@@ -62,7 +65,7 @@ export default function Dashboard() {
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, isLoggingOut]);
 
   const fetchSettings = async (userId) => {
     const { data } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
@@ -75,9 +78,9 @@ export default function Dashboard() {
     if(session?.user) await supabase.from('user_settings').update({ [feature]: newValue }).eq('user_id', session.user.id);
   };
 
-  // --- FIX: Redirect BEFORE signing out to prevent React crash ---
   const handleLogout = async () => {
-    router.push("/login");
+    setIsLoggingOut(true); // Stop React from crashing
+    router.push("/login"); // Redirect first
     await supabase.auth.signOut({ scope: 'local' });
     sessionStorage.clear();
   };
