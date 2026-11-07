@@ -68,7 +68,6 @@ function LoginForm() {
 
   const handleGoogleLogin = async () => {
     try {
-      sessionStorage.setItem("oauth_flow", "true");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: `${window.location.origin}/dashboard` }
@@ -81,7 +80,6 @@ function LoginForm() {
 
   const handleGithubLogin = async () => {
     try {
-      sessionStorage.setItem("oauth_flow", "true");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: { redirectTo: `${window.location.origin}/dashboard` }
@@ -94,7 +92,6 @@ function LoginForm() {
 
   const handleDiscordLogin = async () => {
     try {
-      sessionStorage.setItem("oauth_flow", "true");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: { redirectTo: `${window.location.origin}/dashboard` }
