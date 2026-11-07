@@ -182,18 +182,23 @@ export default function Dashboard() {
 
   const handleForgotPassword = async () => {
     if (!email) return setAuthError("Please enter your email to reset password.");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/dashboard` });
+    
+    // Redirects to /reset-password instead of /dashboard
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { 
+      redirectTo: `${window.location.origin}/reset-password` 
+    });
+    
     if (error) setAuthError(error.message);
-    else setAuthError("✅ Password reset link sent! Check your email.");
+    else setAuthError("Password reset link sent! Check your email.");
   };
 
   const checkAvailability = async () => {
     const { data: usernameData } = await supabase.from('user_settings').select('username').ilike('username', username).maybeSingle();
-    if (usernameData) throw new Error("❌ This username is already taken. Please choose another.");
+    if (usernameData) throw new Error("This username is already taken. Please choose another.");
 
     const fullPhone = selectedCountry.code + phone;
     const { data: phoneData } = await supabase.from('user_settings').select('phone').eq('phone', fullPhone).maybeSingle();
-    if (phoneData) throw new Error("❌ This phone number is already registered.");
+    if (phoneData) throw new Error("This phone number is already registered.");
   };
 
   const handleAuth = async (e) => {
@@ -227,7 +232,7 @@ export default function Dashboard() {
         if (error) throw new Error(error.message);
         if (!data.user) throw new Error("Signup failed. Please try again.");
         if (data.user.identities && data.user.identities.length === 0) {
-          throw new Error("❌ This email is already registered. Please log in instead.");
+          throw new Error("This email is already registered. Please log in instead.");
         }
 
         // Insert profile row
@@ -246,12 +251,12 @@ export default function Dashboard() {
             throw new Error("Profile save blocked by security policy. Please try again or contact support.");
           }
           if (insertError.message.includes("duplicate key")) {
-            throw new Error("❌ This username or phone was just registered by someone else. Please try again.");
+            throw new Error("This username or phone was just registered by someone else. Please try again.");
           }
           throw new Error("Account created but profile save failed: " + insertError.message);
         }
 
-        setAuthError("✅ Verify your email to activate your account. Check your inbox, then log in.");
+        setAuthError("Verify your email to activate your account. Check your inbox, then log in.");
         setIsLogin(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -286,7 +291,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">WALLYJAYTECH-MD</h1>
           <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">{isLogin ? "Login to your dashboard" : "Create your dashboard"}</p>
           
-          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.startsWith("✅") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
+          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.startsWith("Verify") || authError.startsWith("Password reset") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
 
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
