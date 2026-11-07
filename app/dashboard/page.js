@@ -54,6 +54,7 @@ export default function Dashboard() {
 
   useEffect(() => setMounted(true), []);
 
+  // --- UPDATED: Deleted users stay logged in until they click something ---
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -62,28 +63,25 @@ export default function Dashboard() {
         return;
       }
 
-      // Check if profile exists AND has a username
+      // Check if profile exists
       const { data: profile } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).maybeSingle();
       
       if (!profile || !profile.username) {
-        // Check when the account was created
+        // Check if they are a new OAuth user (created less than 5 mins ago)
         const accountCreatedAt = new Date(session.user.created_at).getTime();
         const now = new Date().getTime();
         const minutesSinceCreation = (now - accountCreatedAt) / 1000 / 60;
 
-        // If the account is older than 5 minutes and has no profile, they were deleted!
         if (minutesSinceCreation > 5) {
-          setIsLoggingOut(true); 
-          await supabase.auth.signOut({ scope: 'local' });
-          sessionStorage.clear();
-          localStorage.clear();
-          setSession(null);
+          // This is an old account with no profile. They were deleted.
+          // We do NOT log them out immediately. We just let them sit here.
+          // But we set a flag so any action they take will kick them out.
+          setSession(session); 
           setLoading(false);
-          window.location.href = '/';
           return;
         }
 
-        // If it's a brand new account, show profile completion
+        // New OAuth user - show profile completion
         setNeedsProfile(true);
         
         const meta = session.user.user_metadata;
@@ -126,10 +124,36 @@ export default function Dashboard() {
     return () => subscription.unsubscribe();
   }, [router, isLoggingOut]);
 
+  // --- UPDATED: Every time they change tabs, verify they still exist ---
+  const handleTabChange = async (tab) => {
+    const { data: profile } = await supabase.from('user_settings').select('user_id').eq('user_id', session.user.id).maybeSingle();
+    
+    if (!profile) {
+      // User was deleted! Kick them to the homepage.
+      setIsLoggingOut(true);
+      await supabase.auth.signOut({ scope: 'local' });
+      sessionStorage.clear();
+      window.location.href = '/';
+      return;
+    }
+    
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+  };
+
   const toggleFeature = async (feature) => {
+    // Check if they still exist before saving
+    const { data: profile } = await supabase.from('user_settings').select('user_id').eq('user_id', session.user.id).maybeSingle();
+    if (!profile) {
+      setIsLoggingOut(true);
+      await supabase.auth.signOut({ scope: 'local' });
+      window.location.href = '/';
+      return;
+    }
+
     const newValue = !settings[feature];
     setSettings(prev => ({ ...prev, [feature]: newValue }));
-    if(session?.user) await supabase.from('user_settings').update({ [feature]: newValue }).eq('user_id', session.user.id);
+    await supabase.from('user_settings').update({ [feature]: newValue }).eq('user_id', session.user.id);
   };
 
   const handleLogout = async () => {
@@ -303,15 +327,15 @@ export default function Dashboard() {
 
               <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Main</p>
-                <MobileNavItem icon={<LayoutDashboard size={18}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }} />
-                <MobileNavItem icon={<Bot size={18}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => { setActiveTab('ai'); setIsMobileMenuOpen(false); }} />
-                <MobileNavItem icon={<Users size={18}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => { setActiveTab('groups'); setIsMobileMenuOpen(false); }} />
-                <MobileNavItem icon={<Download size={18}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => { setActiveTab('downloads'); setIsMobileMenuOpen(false); }} />
-                <MobileNavItem icon={<Settings size={18}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => { setActiveTab('controls'); setIsMobileMenuOpen(false); }} />
+                <MobileNavItem icon={<LayoutDashboard size={18}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => handleTabChange('dashboard')} />
+                <MobileNavItem icon={<Bot size={18}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => handleTabChange('ai')} />
+                <MobileNavItem icon={<Users size={18}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => handleTabChange('groups')} />
+                <MobileNavItem icon={<Download size={18}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => handleTabChange('downloads')} />
+                <MobileNavItem icon={<Settings size={18}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => handleTabChange('controls')} />
                 
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-4">Account</p>
-                <MobileNavItem icon={<CreditCard size={18}/>} label="Billing" active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} />
-                <MobileNavItem icon={<User size={18}/>} label="Profile" active={activeTab === 'profile'} onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} />
+                <MobileNavItem icon={<CreditCard size={18}/>} label="Billing" active={activeTab === 'billing'} onClick={() => handleTabChange('billing')} />
+                <MobileNavItem icon={<User size={18}/>} label="Profile" active={activeTab === 'profile'} onClick={() => handleTabChange('profile')} />
               </nav>
 
               <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-2">
@@ -359,15 +383,15 @@ export default function Dashboard() {
 
         <nav className="flex-1 px-4 pb-4 space-y-1 overflow-y-auto">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Main</p>
-          <SidebarItem icon={<LayoutDashboard size={18}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <SidebarItem icon={<Bot size={18}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
-          <SidebarItem icon={<Users size={18}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => setActiveTab('groups')} />
-          <SidebarItem icon={<Download size={18}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')} />
-          <SidebarItem icon={<Settings size={18}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => setActiveTab('controls')} />
+          <SidebarItem icon={<LayoutDashboard size={18}/>} label="Overview" active={activeTab === 'dashboard'} onClick={() => handleTabChange('dashboard')} />
+          <SidebarItem icon={<Bot size={18}/>} label="AI Settings" active={activeTab === 'ai'} onClick={() => handleTabChange('ai')} />
+          <SidebarItem icon={<Users size={18}/>} label="Group Management" active={activeTab === 'groups'} onClick={() => handleTabChange('groups')} />
+          <SidebarItem icon={<Download size={18}/>} label="Downloader" active={activeTab === 'downloads'} onClick={() => handleTabChange('downloads')} />
+          <SidebarItem icon={<Settings size={18}/>} label="Bot Controls" active={activeTab === 'controls'} onClick={() => handleTabChange('controls')} />
           
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-4">Account</p>
-          <SidebarItem icon={<CreditCard size={18}/>} label="Billing" active={activeTab === 'billing'} onClick={() => setActiveTab('billing')} />
-          <SidebarItem icon={<User size={18}/>} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+          <SidebarItem icon={<CreditCard size={18}/>} label="Billing" active={activeTab === 'billing'} onClick={() => handleTabChange('billing')} />
+          <SidebarItem icon={<User size={18}/>} label="Profile" active={activeTab === 'profile'} onClick={() => handleTabChange('profile')} />
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
@@ -430,7 +454,7 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                      <button className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.4)]">
+                      <button onClick={() => toggleFeature('bot_connected')} className="bg-[#FFD700] text-black font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition-all text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.4)]">
                         <RefreshCw size={16} /> Restart Bot
                       </button>
                       <button className="bg-white/10 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/20 transition-all text-sm flex items-center justify-center gap-2 border border-white/20 backdrop-blur-sm">
@@ -489,10 +513,10 @@ export default function Dashboard() {
                 <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
                   <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <QuickAction icon={<Bot size={22} />} label="AI Chat" onClick={() => setActiveTab('ai')} />
-                    <QuickAction icon={<Users size={22} />} label="Groups" onClick={() => setActiveTab('groups')} />
-                    <QuickAction icon={<Download size={22} />} label="Downloader" onClick={() => setActiveTab('downloads')} />
-                    <QuickAction icon={<Settings size={22} />} label="Controls" onClick={() => setActiveTab('controls')} />
+                    <QuickAction icon={<Bot size={22} />} label="AI Chat" onClick={() => handleTabChange('ai')} />
+                    <QuickAction icon={<Users size={22} />} label="Groups" onClick={() => handleTabChange('groups')} />
+                    <QuickAction icon={<Download size={22} />} label="Downloader" onClick={() => handleTabChange('downloads')} />
+                    <QuickAction icon={<Settings size={22} />} label="Controls" onClick={() => handleTabChange('controls')} />
                   </div>
                 </div>
               </motion.div>
