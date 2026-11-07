@@ -39,7 +39,7 @@ function LoginForm() {
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // --- UPDATED: SMART MESSAGE LOGIC ---
+  // --- UPDATED: Auto-hide message after 15 seconds ---
   useEffect(() => {
     const message = searchParams.get("message");
     const hash = window.location.hash;
@@ -51,20 +51,12 @@ function LoginForm() {
         setSuccess("Account already verified. Please log in to proceed.");
       }
     } else if (message) {
-      if (message.includes("Verify your email")) {
-        // If they land on this page with the "Verify email" message, 
-        // they might have verified it on another tab.
-        // We check the database to see if they are verified. 
-        // If they are, we change the message.
-        const checkVerification = async () => {
-           // We can't query auth.users directly, so we just rely on the URL.
-           // If they clicked the link in Gmail, they will come back with the success message.
-           setSuccess(message);
-        };
-        checkVerification();
-      } else {
-        setSuccess(message);
-      }
+      setSuccess(message);
+      // Auto-hide the message after 15 seconds so it doesn't stick forever
+      const timer = setTimeout(() => {
+        setSuccess("");
+      }, 15000);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
