@@ -108,7 +108,8 @@ export default function Signup() {
         email, 
         password, 
         options: { 
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          // UPDATED: Points to the new success page
+          emailRedirectTo: `${window.location.origin}/verify-success`,
           data: { username }
         }
       });
