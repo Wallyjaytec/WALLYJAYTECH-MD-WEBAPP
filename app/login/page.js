@@ -39,9 +39,20 @@ function LoginForm() {
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // --- UPDATED: Catch "already verified" errors from the URL ---
   useEffect(() => {
     const message = searchParams.get("message");
-    if (message) setSuccess(message);
+    const hash = window.location.hash;
+    
+    if (hash && hash.includes("error_description")) {
+      const params = new URLSearchParams(hash.substring(1));
+      const errorDesc = params.get("error_description");
+      if (errorDesc && errorDesc.includes("Email link is invalid or has expired")) {
+        setSuccess("Account already verified. Please log in to proceed.");
+      }
+    } else if (message) {
+      setSuccess(message);
+    }
   }, [searchParams]);
 
   const handleLogin = async (e) => {
