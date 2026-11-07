@@ -66,13 +66,14 @@ export default function Dashboard() {
       const { data: profile } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).maybeSingle();
       
       if (!profile || !profile.username) {
-        // User logged in via Google or has an incomplete profile
+        // User logged in via OAuth (Google/GitHub/Discord) and needs to complete profile
         setNeedsProfile(true);
         
-        // Try to pre-fill from Google metadata
+        // Try to pre-fill name from any provider (Google, GitHub, Discord)
         const meta = session.user.user_metadata;
         if (meta) {
-          const nameParts = (meta.full_name || meta.name || "").split(" ");
+          const fullName = meta.full_name || meta.name || meta.user_name || meta.preferred_username || "";
+          const nameParts = fullName.split(" ");
           setCompFirstName(nameParts[0] || "");
           setCompLastName(nameParts.slice(1).join(" ") || "");
         }
@@ -159,7 +160,7 @@ export default function Dashboard() {
   if (loading || !mounted) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
   // ==========================================
-  // PROFILE COMPLETION SCREEN (For Google Users)
+  // PROFILE COMPLETION SCREEN (For OAuth Users)
   // ==========================================
   if (needsProfile) {
     return (
