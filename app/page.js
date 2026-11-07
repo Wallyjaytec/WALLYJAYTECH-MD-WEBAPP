@@ -9,7 +9,7 @@ import {
   Play, Bot, Image as ImageIcon, Globe, Star, 
   CheckCircle, ArrowUp, Camera, Mic, Send, CheckCheck, 
   UserPlus, QrCode, Settings, Mail, ChevronLeft, ChevronRight,
-  Plus, Minus, Sun, Moon
+  Plus, Minus, Sun, Moon, HelpCircle, FileText, Users, DollarSign
 } from "lucide-react";
 
 // --- SVG BRAND ICONS ---
@@ -142,6 +142,36 @@ export default function LandingPage() {
     "Media Downloader (Video, Audio)", "Group Management (Admin Tools)", "Anti-Ban Protection"
   ];
 
+  const pricingPlans = [
+    {
+      name: "Free",
+      price: "$0",
+      period: "/forever",
+      desc: "Perfect for testing the waters and basic personal use.",
+      features: ["Basic Commands", "Limited AI Chat", "Standard Support", "Single Device"],
+      buttonText: "Current Plan",
+      highlight: false
+    },
+    {
+      name: "Premium",
+      price: "$5",
+      period: "/month",
+      desc: "For power users who want advanced automation and AI.",
+      features: ["3000+ Commands", "Unlimited AI Chat", "Priority Support", "Multi-Device Access", "No Ads"],
+      buttonText: "Upgrade to Premium",
+      highlight: true
+    },
+    {
+      name: "Pro",
+      price: "$15",
+      period: "/month",
+      desc: "For businesses and group admins needing max performance.",
+      features: ["Everything in Premium", "Custom Bot Persona", "Dedicated Server Node", "VIP Support", "Early Access Features"],
+      buttonText: "Upgrade to Pro",
+      highlight: false
+    }
+  ];
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % Math.max(1, features.length - cardsPerView + 1));
@@ -221,16 +251,30 @@ export default function LandingPage() {
           </div>
         </div>
 
+        {/* MOBILE MENU */}
         <AnimatePresence>
           {isMenuOpen && (
             <>
               <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsMenuOpen(false)}></div>
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 shadow-xl z-50">
-                <div className="flex flex-col p-4 space-y-4 font-bold text-lg">
-                  <a href="#features" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Features</a>
-                  <a href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">How it Works</a>
-                  <a href="#testimonials" onClick={() => setIsMenuOpen(false)} className="hover:text-[#FFD700]">Reviews</a>
-                  <Link href="/login" className="bg-[#FFD700] text-black text-center py-3 rounded-xl mt-4">Login / Sign Up</Link>
+                <div className="flex flex-col p-4 space-y-1 font-bold text-sm">
+                  
+                  <p className="text-[10px] uppercase text-gray-400 px-4 pt-2 pb-1 tracking-widest">Navigation</p>
+                  <a href="#features" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><Zap size={18}/> Features</a>
+                  <a href="#how-it-works" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><Settings size={18}/> How it Works</a>
+                  <a href="#testimonials" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><Star size={18}/> Reviews</a>
+                  <a href="#pricing" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><DollarSign size={18}/> Pricing</a>
+                  <a href="#faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><HelpCircle size={18}/> FAQs</a>
+                  
+                  <p className="text-[10px] uppercase text-gray-400 px-4 pt-4 pb-1 tracking-widest">Company</p>
+                  <a href="#about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><Users size={18}/> About Us</a>
+                  <a href="#contact" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><Mail size={18}/> Contact Us</a>
+                  <Link href="/privacy" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><Shield size={18}/> Privacy Policy</Link>
+                  <Link href="/terms" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] hover:text-[#FFD700] transition-colors flex items-center gap-3"><FileText size={18}/> Terms of Service</Link>
+
+                  <div className="pt-4 pb-2">
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block w-full bg-[#FFD700] text-black text-center py-4 rounded-xl shadow-lg shadow-yellow-500/20">Login / Sign Up</Link>
+                  </div>
                 </div>
               </motion.div>
             </>
@@ -406,8 +450,61 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* PRICING SECTION (NEW) */}
+        <section id="pricing" className="py-24 max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-black mb-4">Simple, transparent pricing.</h2>
+            <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Choose the plan that fits your needs. Upgrade or downgrade at any time.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {pricingPlans.map((plan, i) => (
+              <div 
+                key={i} 
+                className={`relative p-8 rounded-3xl border-2 transition-all duration-300 flex flex-col ${
+                  plan.highlight 
+                    ? 'border-[#FFD700] bg-[#FFD700]/5 dark:bg-[#0a0a0a] shadow-[0_0_30px_rgba(255,215,0,0.15)] scale-105 z-10' 
+                    : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] hover:border-[#FFD700]/50'
+                }`}
+              >
+                {plan.highlight && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FFD700] text-black text-xs font-black uppercase tracking-widest py-1 px-4 rounded-full shadow-lg">
+                    Most Popular
+                  </div>
+                )}
+                
+                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-4xl font-black">{plan.price}</span>
+                  <span className="text-gray-500 font-medium">{plan.period}</span>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">{plan.desc}</p>
+                
+                <ul className="space-y-3 mb-8 flex-grow">
+                  {plan.features.map((f, j) => (
+                    <li key={j} className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <CheckCircle size={16} className={plan.highlight ? "text-[#FFD700]" : "text-green-500"} /> {f}
+                    </li>
+                  ))}
+                </ul>
+                
+                <Link 
+                  href={plan.name === "Free" ? "/signup" : "/dashboard?tab=billing"}
+                  className={`block w-full text-center py-3 rounded-xl font-bold transition-all ${
+                    plan.highlight 
+                      ? 'bg-[#FFD700] text-black hover:bg-yellow-500 shadow-md' 
+                      : 'bg-gray-100 dark:bg-[#111] text-black dark:text-white hover:bg-gray-200 dark:hover:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800'
+                  }`}
+                >
+                  {plan.buttonText}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* FEATURES CAROUSEL */}
-        <section id="features" className="py-24 overflow-hidden">
+        <section id="features" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Everything you need.</h2>
@@ -428,7 +525,7 @@ export default function LandingPage() {
               >
                 {features.map((f, i) => (
                   <div key={i} className="min-w-full md:min-w-[50%] lg:min-w-[33.333%] px-3">
-                    <div className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors group h-full flex flex-col">
+                    <div className="p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 hover:border-[#FFD700] transition-colors group h-full flex flex-col">
                       <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/10 text-[#FFD700] flex items-center justify-center mb-6 group-hover:bg-[#FFD700] group-hover:text-black transition-all flex-shrink-0">
                         {f.icon}
                       </div>
@@ -449,7 +546,7 @@ export default function LandingPage() {
         </section>
 
         {/* HOW IT WORKS */}
-        <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
+        <section id="how-it-works" className="py-24">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Start in 3 steps.</h2>
@@ -468,7 +565,7 @@ export default function LandingPage() {
                   className={`relative p-8 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center text-center cursor-pointer group ${
                     activeStep === i 
                       ? 'border-[#FFD700] bg-white dark:bg-[#0a0a0a] shadow-[0_0_30px_rgba(255,215,0,0.15)] scale-105' 
-                      : 'border-transparent bg-white dark:bg-[#0a0a0a] hover:border-[#FFD700]/50'
+                      : 'border-transparent bg-gray-50 dark:bg-[#0a0a0a] hover:border-[#FFD700]/50'
                   }`}
                 >
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-colors ${activeStep === i ? 'bg-[#FFD700] text-black' : 'bg-[#FFD700]/10 text-[#FFD700]'}`}>
@@ -483,7 +580,7 @@ export default function LandingPage() {
         </section>
 
         {/* TESTIMONIALS */}
-        <section id="testimonials" className="py-24 overflow-hidden">
+        <section id="testimonials" className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
               <h2 className="text-3xl md:text-5xl font-black">Trusted by Thousands Worldwide</h2>
@@ -505,7 +602,7 @@ export default function LandingPage() {
               >
                 {testimonials.map((t, i) => (
                   <div key={i} className="min-w-full md:min-w-[50%] px-3">
-                    <div className="p-8 rounded-3xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 h-full flex flex-col">
+                    <div className="p-8 rounded-3xl bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 h-full flex flex-col">
                       <div className="flex gap-1 mb-4 text-[#FFD700]">
                         <Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" /><Star size={18} fill="currentColor" />
                       </div>
@@ -532,7 +629,7 @@ export default function LandingPage() {
         </section>
 
         {/* ABOUT US / TEAM */}
-        <section className="py-24 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800 overflow-hidden">
+        <section id="about" className="py-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-5xl font-black mb-4">About Us</h2>
@@ -554,7 +651,7 @@ export default function LandingPage() {
                 >
                   {aboutTeam.map((member, i) => (
                     <div key={i} className="min-w-full px-4 flex justify-center">
-                      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-3xl p-8 md:p-12 max-w-2xl w-full flex flex-col items-center text-center shadow-lg">
+                      <div className="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 rounded-3xl p-8 md:p-12 max-w-2xl w-full flex flex-col items-center text-center shadow-lg">
                         <img src={member.img} alt={member.name} className="w-32 h-32 rounded-full object-cover border-4 border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] mb-6" />
                         <h3 className="text-2xl font-bold mb-1">{member.name}</h3>
                         <p className="text-[#FFD700] font-semibold mb-4">{member.role}</p>
@@ -582,7 +679,7 @@ export default function LandingPage() {
         </section>
 
         {/* NEWSLETTER */}
-        <section className="py-24 px-6">
+        <section className="py-24 px-6 bg-gray-50 dark:bg-[#080808] border-y border-gray-200 dark:border-gray-800">
           <div className="max-w-4xl mx-auto bg-black dark:bg-[#111] rounded-3xl p-8 md:p-12 border border-gray-800 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFD700] opacity-10 blur-[80px] rounded-full"></div>
             <div className="relative z-10 w-full md:w-1/2 text-center md:text-left">
@@ -597,7 +694,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA BANNER */}
-        <section className="pb-12 px-6">
+        <section className="py-12 px-6">
           <div className="max-w-7xl mx-auto bg-[#FFD700] rounded-3xl p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-[0_0_50px_rgba(255,215,0,0.2)]">
             <div className="relative z-10 text-center md:text-left">
               <h2 className="text-3xl md:text-4xl font-black text-black mb-2">Ready to experience the best WhatsApp bot?</h2>
@@ -608,7 +705,7 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="py-24 bg-gray-50 dark:bg-[#080808] border-t border-gray-200 dark:border-gray-800">
+        <section id="faq" className="py-24">
           <div className="max-w-3xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-5xl font-black mb-4">Frequently Asked Questions</h2>
@@ -656,10 +753,10 @@ export default function LandingPage() {
                 <ul className="flex flex-col space-y-2 text-sm text-gray-500 dark:text-gray-400">
                   <li><a href="#features" className="hover:text-[#FFD700]">Features</a></li>
                   <li><Link href="/login" className="hover:text-[#FFD700]">Dashboard</Link></li>
-                  <li><a href="#" className="hover:text-[#FFD700]">Pricing</a></li>
+                  <li><a href="#pricing" className="hover:text-[#FFD700]">Pricing</a></li>
                 </ul>
               </div>
-              <div id="terms">
+              <div id="legal">
                 <h4 className="font-bold mb-4">Legal</h4>
                 <ul className="flex flex-col space-y-2 text-sm text-gray-500 dark:text-gray-400">
                   <li><Link href="/terms" className="hover:text-[#FFD700]">Terms of Service</Link></li>
@@ -673,7 +770,7 @@ export default function LandingPage() {
                   <li><a href="https://youtube.com/@wallyjaytechy" target="_blank" className="hover:text-[#FFD700]">YouTube</a></li>
                   <li><a href="https://tiktok.com/@wallyjaytech" target="_blank" className="hover:text-[#FFD700]">TikTok</a></li>
                   <li><a href="https://t.me/wallyjaytechs" target="_blank" className="hover:text-[#FFD700]">Telegram</a></li>
-                  <li><a href="mailto:wallyjaytech@gmail.com" className="hover:text-[#FFD700]">Gmail</a></li>
+                  <li><a href="mailto:support@wallyjaytech-md.online" className="hover:text-[#FFD700]">Email Support</a></li>
                 </ul>
               </div>
             </div>
@@ -685,7 +782,7 @@ export default function LandingPage() {
             <a href="https://youtube.com/@wallyjaytechy" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><YoutubeIcon size={20} className="text-[#FF0000]" /></a>
             <a href="https://tiktok.com/@wallyjaytech" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><TiktokIcon size={20} className="text-black dark:text-white" /></a>
             <a href="https://t.me/wallyjaytechs" target="_blank" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><TelegramIcon size={20} className="text-[#0088cc]" /></a>
-            <a href="mailto:wallyjaytech@gmail.com" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><GmailIcon size={20} className="text-[#EA4335]" /></a>
+            <a href="mailto:support@wallyjaytech-md.online" className="p-2.5 bg-gray-50 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 hover:scale-110 transition-transform shadow-sm"><GmailIcon size={20} className="text-[#EA4335]" /></a>
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8 text-center">
