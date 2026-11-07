@@ -10,8 +10,21 @@ import {
   Bot, Shield, Settings, LogOut, Activity, Zap, CreditCard, 
   LayoutDashboard, MessageSquare, ChevronRight, Mail, 
   User, Lock, X, Users, Download, RefreshCw, Bell, TrendingUp, 
-  ArrowDownRight, Terminal, Menu, Star, Crown, Sparkles, Sun, Moon
+  ArrowDownRight, Terminal, Menu, Star, Crown, Sparkles, Sun, Moon,
+  Phone, ChevronDown
 } from "lucide-react";
+
+const countries = [
+  { name: "Select Country", code: "", flag: "", phoneLength: 0 },
+  { name: "Nigeria", code: "+234", flag: "🇳🇬", phoneLength: 10 },
+  { name: "United States", code: "+1", flag: "🇺🇸", phoneLength: 10 },
+  { name: "United Kingdom", code: "+44", flag: "🇬🇧", phoneLength: 10 },
+  { name: "Ghana", code: "+233", flag: "🇬🇭", phoneLength: 9 },
+  { name: "South Africa", code: "+27", flag: "🇿🇦", phoneLength: 9 },
+  { name: "Kenya", code: "+254", flag: "🇰🇪", phoneLength: 9 },
+  { name: "Canada", code: "+1", flag: "🇨🇦", phoneLength: 10 },
+  { name: "India", code: "+91", flag: "🇮🇳", phoneLength: 10 },
+];
 
 export default function Dashboard() {
   const router = useRouter();
@@ -23,6 +36,16 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Profile Completion State
+  const [needsProfile, setNeedsProfile] = useState(false);
+  const [compUsername, setCompUsername] = useState("");
+  const [compFirstName, setCompFirstName] = useState("");
+  const [compLastName, setCompLastName] = useState("");
+  const [compPhone, setCompPhone] = useState("");
+  const [compCountry, setCompCountry] = useState(countries[0]);
+  const [compError, setCompError] = useState("");
+  const [compSubmitting, setCompSubmitting] = useState(false);
+
   const [settings, setSettings] = useState({
     bot_connected: false, ai_enabled: false, antilink_enabled: false,
     autostatus_enabled: false, autorecord_enabled: false,
@@ -39,23 +62,33 @@ export default function Dashboard() {
         return;
       }
 
-      const { data: profile } = await supabase.from('user_settings').select('user_id').eq('user_id', session.user.id).maybeSingle();
-      if (!profile) {
-        await supabase.auth.signOut({ scope: 'local' });
-        router.push("/login");
-        return;
+      // Check if profile exists AND has a username
+      const { data: profile } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).maybeSingle();
+      
+      if (!profile || !profile.username) {
+        // User logged in via Google or has an incomplete profile
+        setNeedsProfile(true);
+        
+        // Try to pre-fill from Google metadata
+        const meta = session.user.user_metadata;
+        if (meta) {
+          const nameParts = (meta.full_name || meta.name || "").split(" ");
+          setCompFirstName(nameParts[0] || "");
+          setCompLastName(nameParts.slice(1).join(" ") || "");
+        }
+      } else {
+        setNeedsProfile(false);
+        setSettings(profile);
       }
 
       setSession(session);
-      fetchSettings(session.user.id);
       setLoading(false);
     };
 
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (isLoggingOut) return; // Ignore auth changes if logging out
-      
+      if (isLoggingOut) return;
       if (session) {
         checkSession();
       } else {
@@ -67,11 +100,6 @@ export default function Dashboard() {
     return () => subscription.unsubscribe();
   }, [router, isLoggingOut]);
 
-  const fetchSettings = async (userId) => {
-    const { data } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
-    if (data) setSettings(data);
-  };
-
   const toggleFeature = async (feature) => {
     const newValue = !settings[feature];
     setSettings(prev => ({ ...prev, [feature]: newValue }));
@@ -79,14 +107,119 @@ export default function Dashboard() {
   };
 
   const handleLogout = async () => {
-    setIsLoggingOut(true); // Stop React from crashing
-    router.push("/login"); // Redirect first
+    setIsLoggingOut(true);
+    router.push("/login");
     await supabase.auth.signOut({ scope: 'local' });
     sessionStorage.clear();
   };
 
+  // --- COMPLETE PROFILE SUBMIT ---
+  const handleCompleteProfile = async (e) => {
+    e.preventDefault();
+    setCompError("");
+    setCompSubmitting(true);
+
+    try {
+      if (!/^[a-zA-Z]{5,}[0-9]*$/.test(compUsername)) throw new Error("Username must be 5+ letters, followed by optional numbers.");
+      if (!compCountry.code) throw new Error("Please select a country.");
+      if (compPhone.length !== compCountry.phoneLength) throw new Error(`Phone must be ${compCountry.phoneLength} digits for ${compCountry.name}.`);
+
+      // Check if username or phone is taken
+      const { data: uData } = await supabase.from('user_settings').select('username').ilike('username', compUsername).maybeSingle();
+      if (uData && uData.username !== settings.username) throw new Error("This username is already taken.");
+
+      const fullPhone = compCountry.code + compPhone;
+      const { data: pData } = await supabase.from('user_settings').select('phone').eq('phone', fullPhone).maybeSingle();
+      if (pData && pData.phone !== settings.phone) throw new Error("This phone number is already registered.");
+
+      // Upsert the profile
+      const { error: upsertError } = await supabase.from('user_settings').upsert({
+        user_id: session.user.id,
+        first_name: compFirstName,
+        last_name: compLastName,
+        username: compUsername,
+        phone: fullPhone,
+        country: compCountry.name
+      }, { onConflict: 'user_id' });
+
+      if (upsertError) throw new Error("Could not save profile: " + upsertError.message);
+
+      // Refresh profile data
+      const { data: newProfile } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).single();
+      setSettings(newProfile);
+      setNeedsProfile(false);
+
+    } catch (err) {
+      setCompError(err.message);
+    } finally {
+      setCompSubmitting(false);
+    }
+  };
+
   if (loading || !mounted) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
+  // ==========================================
+  // PROFILE COMPLETION SCREEN (For Google Users)
+  // ==========================================
+  if (needsProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#050505] p-4 font-sans relative overflow-x-hidden">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative">
+          <button onClick={handleLogout} className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"><X size={20} /></button>
+          
+          <div className="flex justify-center mb-4">
+            <img src="/assets/images/web_logo.png" alt="Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.3)] object-contain bg-black p-2" />
+          </div>
+          
+          <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">Complete Profile</h1>
+          <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">Just a few more details</p>
+          
+          {compError && <div className="mb-4 p-3 border rounded-lg text-sm text-center bg-red-500/10 border-red-500/50 text-red-500">{compError}</div>}
+
+          <form onSubmit={handleCompleteProfile} className="space-y-4">
+            <div className="flex gap-3">
+              <div className="relative w-1/2">
+                <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                <input type="text" placeholder="First Name" value={compFirstName} onChange={e => setCompFirstName(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              </div>
+              <div className="relative w-1/2">
+                <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                <input type="text" placeholder="Last Name" value={compLastName} onChange={e => setCompLastName(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              </div>
+            </div>
+            
+            <div className="relative">
+              <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+              <input type="text" placeholder="Username (5+ letters)" value={compUsername} onChange={e => setCompUsername(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+            </div>
+
+            <div className="relative">
+              <select value={compCountry.name} onChange={(e) => { const c = countries.find(x => x.name === e.target.value); if(c) setCompCountry(c); }} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer">
+                {countries.map((c, i) => (<option key={i} value={c.name}>{c.flag} {c.name}</option>))}
+              </select>
+              <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={18} />
+            </div>
+
+            <div className="relative flex items-center rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 focus-within:border-[#FFD700] transition-colors">
+              <div className="pl-4 pr-2 text-gray-500 font-medium whitespace-nowrap flex items-center gap-1">
+                <Phone size={18} />
+                {compCountry.code && <span className="ml-1">{compCountry.code}</span>}
+              </div>
+              <input type="tel" placeholder="Phone Number" value={compPhone} onChange={e => setCompPhone(e.target.value)} required className="w-full p-3 bg-transparent text-black dark:text-white outline-none" />
+            </div>
+
+            <button type="submit" disabled={compSubmitting} className={`w-full p-4 mt-2 rounded-xl font-black transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)] ${compSubmitting ? 'bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#FFD700] text-black hover:bg-yellow-500'}`}>
+              {compSubmitting ? "SAVING..." : "COMPLETE PROFILE"}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // MAIN DASHBOARD
+  // ==========================================
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#050505] text-black dark:text-white font-sans">
       
