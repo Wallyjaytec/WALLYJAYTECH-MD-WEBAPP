@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { motion } from "framer-motion";
 import { 
-  Mail, User, Lock, Eye, EyeOff, Phone, X, ChevronDown, CheckCircle 
+  Mail, User, Lock, Eye, EyeOff, Phone, X, ChevronDown 
 } from "lucide-react";
 
 const GoogleIcon = ({ size = 20, className = "" }) => (
@@ -127,12 +127,25 @@ export default function Signup() {
         throw new Error("Account created but profile save failed: " + insertError.message);
       }
 
-      // Redirect to login with a success message in the URL
       router.push("/login?message=Verify your email to activate your account. Check your inbox, then log in.");
     } catch (err) {
       setError(err.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      if (error) throw new Error(error.message);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -215,7 +228,7 @@ export default function Signup() {
           <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
         </div>
 
-        <button className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-all font-bold text-sm">
+        <button onClick={handleGoogleSignup} className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-all font-bold text-sm">
           <GoogleIcon size={20} />
           Sign up with Google
         </button>
