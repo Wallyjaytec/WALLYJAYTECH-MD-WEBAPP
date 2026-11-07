@@ -66,13 +66,14 @@ export default function Dashboard() {
       const { data: profile } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).maybeSingle();
       
       if (!profile || !profile.username) {
-        // Check if they just clicked an OAuth button
-        const isNewOauthSignup = sessionStorage.getItem('oauth_flow') === 'true';
-        
-        if (!isNewOauthSignup) {
-          // FIX: Set isLoggingOut to true BEFORE clearing the session to prevent the black screen
+        // Check when the account was created
+        const accountCreatedAt = new Date(session.user.created_at).getTime();
+        const now = new Date().getTime();
+        const minutesSinceCreation = (now - accountCreatedAt) / 1000 / 60;
+
+        // If the account is older than 5 minutes and has no profile, they were deleted!
+        if (minutesSinceCreation > 5) {
           setIsLoggingOut(true); 
-          
           await supabase.auth.signOut({ scope: 'local' });
           sessionStorage.clear();
           localStorage.clear();
@@ -82,8 +83,7 @@ export default function Dashboard() {
           return;
         }
 
-        // They ARE in an OAuth flow, so it's a new user
-        sessionStorage.removeItem('oauth_flow'); 
+        // If it's a brand new account, show profile completion
         setNeedsProfile(true);
         
         const meta = session.user.user_metadata;
