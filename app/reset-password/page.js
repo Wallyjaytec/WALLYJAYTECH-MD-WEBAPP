@@ -16,57 +16,19 @@ export default function ResetPassword() {
   useEffect(() => {
     let mounted = true;
 
-    const checkToken = async () => {
-      // 1. Supabase puts the secure token in the URL hash (#access_token=...)
-      // We extract it manually so the user is NOT auto-logged in globally.
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const errorDescription = params.get('error_description');
-
-      if (errorDescription) {
-        if (mounted) {
-          setIsExpired(true);
-          setLoading(false);
-        }
-        return;
-      }
-
-      if (accessToken) {
-        // 2. Manually set the session JUST for this page
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        if (error || !data.session) {
-          if (mounted) setIsExpired(true);
-        } else {
-          // 3. Check if the link is older than 30 minutes
-          const linkCreatedAt = new Date(data.session.user.updated_at || data.session.user.created_at).getTime();
-          const now = new Date().getTime();
-          const minutesSinceCreation = (now - linkCreatedAt) / 1000 / 60;
-
-          if (minutesSinceCreation > 30) {
-            if (mounted) setIsExpired(true);
-          } else {
-            if (mounted) setIsExpired(false);
-          }
-        }
+    const checkSession = async () => {
+      // Check if there is a valid session in the URL
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        if (mounted) setIsExpired(true);
       } else {
-        // No token in URL. Check if they already have a valid session (e.g. refreshed page)
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          if (mounted) setIsExpired(true);
-        } else {
-          if (mounted) setIsExpired(false);
-        }
+        if (mounted) setIsExpired(false);
       }
       if (mounted) setLoading(false);
     };
 
-    checkToken();
+    checkSession();
 
     return () => {
       mounted = false;
@@ -96,7 +58,8 @@ export default function ResetPassword() {
     } else {
       setMessage('Password updated successfully! Redirecting to login...');
       
-      // Log out of ALL devices immediately. This kicks the original Chrome tab out!
+      // Log out of ALL devices instantly. 
+      // This forces the original Chrome tab to log out!
       await supabase.auth.signOut({ scope: 'global' }); 
       
       setTimeout(() => {
@@ -118,7 +81,7 @@ export default function ResetPassword() {
           </Link>
           <h2 className="text-2xl font-black text-black dark:text-white mb-2">Link Expired or Used</h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-            This password reset link is invalid, has already been used, or has expired (links are only valid for 30 minutes). Please request a new one from the login page.
+            This password reset link is invalid, has already been used, or has expired. Please request a new one from the login page.
           </p>
           <Link href="/dashboard" className="block w-full bg-[#FFD700] text-black font-bold py-3 rounded-xl hover:bg-yellow-500 transition-colors">
             Return to Login
