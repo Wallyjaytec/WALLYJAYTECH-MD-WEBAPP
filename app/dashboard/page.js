@@ -8,35 +8,10 @@ import { supabase } from "../../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bot, Shield, Settings, LogOut, Activity, Zap, CreditCard, 
-  LayoutDashboard, Cpu, MessageSquare, ChevronRight, Mail, 
-  User, Lock, Eye, EyeOff, Globe, Phone, X, ChevronDown,
-  Users, Download, Power, RefreshCw, Key, Bell, TrendingUp, 
-  ArrowUpRight, ArrowDownRight, Play, Terminal, Menu, 
-  CheckCircle, Clock, Send, BarChart3, Star, Crown, Sparkles,
-  Sun, Moon
+  LayoutDashboard, MessageSquare, ChevronRight, Mail, 
+  User, Lock, X, Users, Download, RefreshCw, Bell, TrendingUp, 
+  ArrowDownRight, Terminal, Menu, Star, Crown, Sparkles, Sun, Moon
 } from "lucide-react";
-
-// --- SVG GOOGLE ICON ---
-const GoogleIcon = ({ size = 20, className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 48 48" className={className}>
-    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-  </svg>
-);
-
-const countries = [
-  { name: "Select Country", code: "", flag: "", phoneLength: 0 },
-  { name: "Nigeria", code: "+234", flag: "🇳🇬", phoneLength: 10 },
-  { name: "United States", code: "+1", flag: "🇺🇸", phoneLength: 10 },
-  { name: "United Kingdom", code: "+44", flag: "🇬🇧", phoneLength: 10 },
-  { name: "Ghana", code: "+233", flag: "🇬🇭", phoneLength: 9 },
-  { name: "South Africa", code: "+27", flag: "🇿🇦", phoneLength: 9 },
-  { name: "Kenya", code: "+254", flag: "🇰🇪", phoneLength: 9 },
-  { name: "Canada", code: "+1", flag: "🇨🇦", phoneLength: 10 },
-  { name: "India", code: "+91", flag: "🇮🇳", phoneLength: 10 },
-];
 
 export default function Dashboard() {
   const router = useRouter();
@@ -47,82 +22,26 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  const [isLogin, setIsLogin] = useState(false); 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [phone, setPhone] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
-  const [authError, setAuthError] = useState("");
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  
   const [settings, setSettings] = useState({
-    bot_connected: false,
-    ai_enabled: false,
-    antilink_enabled: false,
-    autostatus_enabled: false,
-    autorecord_enabled: false,
-    plan_type: 'Free',
-    first_name: '',
-    last_name: '',
-    username: '',
-    phone: '',
-    country: ''
+    bot_connected: false, ai_enabled: false, antilink_enabled: false,
+    autostatus_enabled: false, autorecord_enabled: false,
+    plan_type: 'Free', first_name: '', last_name: '', username: '', phone: '', country: ''
   });
 
   useEffect(() => setMounted(true), []);
 
-  // --- VALIDATION FUNCTIONS ---
-  const validateUsername = (name) => /^[a-zA-Z]{5,}[0-9]*$/.test(name);
-  const validateName = (name) => /^[a-zA-Z]+$/.test(name);
-  const validateEmail = (email) => /^[a-zA-Z]{1,}[0-9]*@gmail\.com$/.test(email);
-  const validatePhone = (number, len) => number.length === len;
-
-  const validatePassword = (pass) => {
-    return pass.length >= 8 && /[A-Z]/.test(pass) && /[a-z]/.test(pass) && /[0-9]/.test(pass) && /[!@#$%^&*(),.?":{}|<>_\-]/.test(pass);
-  };
-
-  const getPasswordErrorMessage = (pass) => {
-    const errors = [];
-    if (pass.length < 8) errors.push("8+ characters");
-    if (!/[A-Z]/.test(pass)) errors.push("1 uppercase");
-    if (!/[a-z]/.test(pass)) errors.push("1 lowercase");
-    if (!/[0-9]/.test(pass)) errors.push("1 number");
-    if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(pass)) errors.push("1 symbol (!@#$...)");
-    return "Password must contain: " + errors.join(", ");
-  };
-
-  // --- SESSION VALIDATION + USER EXISTENCE CHECK ---
   useEffect(() => {
-    const validateSession = async () => {
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (!session) {
-        setSession(null);
-        setLoading(false);
+        router.push("/login");
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('user_settings')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
+      const { data: profile } = await supabase.from('user_settings').select('user_id').eq('user_id', session.user.id).maybeSingle();
       if (!profile) {
         await supabase.auth.signOut({ scope: 'local' });
-        sessionStorage.clear();
-        localStorage.clear();
-        setSession(null);
-        setLoading(false);
-        window.location.href = '/';
+        router.push("/login");
         return;
       }
 
@@ -131,39 +50,15 @@ export default function Dashboard() {
       setLoading(false);
     };
 
-    validateSession();
+    checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        validateSession();
-      } else {
-        setSession(null);
-      }
+      if (session) checkSession();
+      else { setSession(null); router.push("/login"); }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!session) return;
-
-    const interval = setInterval(async () => {
-      const { data: profile } = await supabase
-        .from('user_settings')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-      if (!profile) {
-        await supabase.auth.signOut({ scope: 'local' });
-        sessionStorage.clear();
-        localStorage.clear();
-        window.location.href = '/';
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [session]);
+  }, [router]);
 
   const fetchSettings = async (userId) => {
     const { data } = await supabase.from('user_settings').select('*').eq('user_id', userId).single();
@@ -179,227 +74,11 @@ export default function Dashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut({ scope: 'local' });
     sessionStorage.clear();
-    router.push("/");
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email) return setAuthError("Please enter your email to reset password.");
-    
-    // Sign out locally first so the old Chrome tab doesn't stay logged in!
-    await supabase.auth.signOut({ scope: 'local' });
-    sessionStorage.clear();
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { 
-      redirectTo: `${window.location.origin}/reset-password` 
-    });
-    
-    if (error) setAuthError(error.message);
-    else setAuthError("If your email is registered, you will receive a password reset link. Please check your inbox and spam folder.");
-  };
-
-  const checkAvailability = async () => {
-    const { data: usernameData } = await supabase.from('user_settings').select('username').ilike('username', username).maybeSingle();
-    if (usernameData) throw new Error("This username is already taken. Please choose another.");
-
-    const fullPhone = selectedCountry.code + phone;
-    const { data: phoneData } = await supabase.from('user_settings').select('phone').eq('phone', fullPhone).maybeSingle();
-    if (phoneData) throw new Error("This phone number is already registered.");
-  };
-
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    setAuthError("");
-    setSubmitting(true);
-
-    try {
-      if (!isLogin) {
-        if (!validateName(firstName)) throw new Error("First name must contain only letters.");
-        if (!validateName(lastName)) throw new Error("Last name must contain only letters.");
-        if (!validateUsername(username)) throw new Error("Username must be 5+ letters, followed by optional numbers.");
-        if (!validateEmail(email)) throw new Error("Email must be a valid @gmail.com address.");
-        if (!selectedCountry.code) throw new Error("Please select a country.");
-        if (!validatePhone(phone, selectedCountry.phoneLength)) throw new Error(`Phone must be ${selectedCountry.phoneLength} digits for ${selectedCountry.name}.`);
-        if (!validatePassword(password)) throw new Error(getPasswordErrorMessage(password));
-        if (password !== confirmPassword) throw new Error("Passwords do not match.");
-        if (!agreedToTerms) throw new Error("You must agree to the Terms of Service and Privacy Policy.");
-
-        await checkAvailability();
-
-        const { data, error } = await supabase.auth.signUp({ 
-          email, 
-          password, 
-          options: { 
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-            data: { username }
-          }
-        });
-        
-        if (error) throw new Error(error.message);
-        if (!data.user) throw new Error("Signup failed. Please try again.");
-        if (data.user.identities && data.user.identities.length === 0) {
-          throw new Error("This email is already registered. Please log in instead.");
-        }
-
-        const { error: insertError } = await supabase.from('user_settings').insert({
-          user_id: data.user.id,
-          first_name: firstName,
-          last_name: lastName,
-          username: username,
-          phone: selectedCountry.code + phone,
-          country: selectedCountry.name
-        });
-
-        if (insertError) {
-          console.error("Profile save error:", insertError);
-          if (insertError.message.includes("row-level security")) {
-            throw new Error("Profile save blocked by security policy. Please try again or contact support.");
-          }
-          if (insertError.message.includes("duplicate key")) {
-            throw new Error("This username or phone was just registered by someone else. Please try again.");
-          }
-          throw new Error("Account created but profile save failed: " + insertError.message);
-        }
-
-        setAuthError("Verify your email to activate your account. Check your inbox, then log in.");
-        setIsLogin(true);
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw new Error(error.message);
-        
-        if (rememberMe) sessionStorage.setItem("remember_me", "true");
-        else sessionStorage.setItem("remember_me", "false");
-        sessionStorage.setItem("session_active", "true");
-      }
-    } catch (err) {
-      setAuthError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
+    router.push("/login");
   };
 
   if (loading || !mounted) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
-  // ==========================================
-  // 1. AUTH SCREEN (Login/Signup)
-  // ==========================================
-  if (!session) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#050505] p-4 py-10 font-sans transition-colors duration-300 relative overflow-x-hidden">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#0a0a0a] p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl my-auto relative">
-          <Link href="/" className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"><X size={20} /></Link>
-          
-          <Link href="/" className="flex justify-center mb-4">
-            <img src="/assets/images/web_logo.png" alt="Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(255,215,0,0.3)] object-contain bg-black p-2 hover:scale-105 transition-transform" />
-          </Link>
-          
-          <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">WALLYJAYTECH-MD</h1>
-          <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">{isLogin ? "Login to your dashboard" : "Create your dashboard"}</p>
-          
-          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.includes("Verify") || authError.includes("Password reset link") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
-
-          <form onSubmit={handleAuth} className="space-y-4">
-            {!isLogin && (
-              <>
-                <div className="flex gap-3">
-                  <div className="relative w-1/2">
-                    <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                    <input type="text" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
-                  </div>
-                  <div className="relative w-1/2">
-                    <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                    <input type="text" placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
-                  </div>
-                </div>
-                <div className="relative">
-                  <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
-                </div>
-              </>
-            )}
-
-            <div className="relative">
-              <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
-            </div>
-
-            {!isLogin && (
-              <>
-                <div className="relative">
-                  <select value={selectedCountry.name} onChange={(e) => { const c = countries.find(x => x.name === e.target.value); if(c) setSelectedCountry(c); }} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none appearance-none cursor-pointer">
-                    {countries.map((c, i) => (<option key={i} value={c.name}>{c.flag} {c.name}</option>))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={18} />
-                </div>
-                <div className="relative flex items-center rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 focus-within:border-[#FFD700] transition-colors">
-                  <div className="pl-4 pr-2 text-gray-500 font-medium whitespace-nowrap flex items-center gap-1">
-                    <Phone size={18} />
-                    {selectedCountry.code && <span className="ml-1">{selectedCountry.code}</span>}
-                  </div>
-                  <input type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required className="w-full p-3 bg-transparent text-black dark:text-white outline-none" />
-                </div>
-              </>
-            )}
-
-            <div className="relative">
-              <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full p-3 pl-10 pr-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-gray-400 hover:text-[#FFD700]">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
-            </div>
-
-            {!isLogin && (
-              <div className="relative">
-                <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full p-3 pl-10 pr-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3.5 text-gray-400 hover:text-[#FFD700]">{showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
-              </div>
-            )}
-
-            {isLogin && (
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer text-gray-600 dark:text-gray-400">
-                  <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="w-4 h-4 accent-[#FFD700]" />
-                  Remember me
-                </label>
-                <button type="button" onClick={handleForgotPassword} className="text-[#FFD700] font-semibold hover:underline">Forgot password?</button>
-              </div>
-            )}
-
-            {!isLogin && (
-              <div className="flex items-start gap-2 text-sm">
-                <input type="checkbox" checked={agreedToTerms} onChange={e => setAgreedToTerms(e.target.checked)} className="w-4 h-4 mt-1 accent-[#FFD700]" />
-                <label className="text-gray-600 dark:text-gray-400">
-                  I agree to the <Link href="/terms" className="text-[#FFD700] hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-[#FFD700] hover:underline">Privacy Policy</Link>
-                </label>
-              </div>
-            )}
-
-            <button type="submit" disabled={(!isLogin && !agreedToTerms) || submitting} className={`w-full p-4 mt-2 rounded-xl font-black transition-all shadow-[0_0_20px_rgba(255,215,0,0.3)] ${(!isLogin && !agreedToTerms) || submitting ? 'bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#FFD700] text-black hover:bg-yellow-500'}`}>
-              {submitting ? "PLEASE WAIT..." : (isLogin ? "LOG IN" : "CREATE ACCOUNT")}
-            </button>
-          </form>
-
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
-            <span className="text-xs text-gray-400 font-medium uppercase">Or</span>
-            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
-          </div>
-
-          <button className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-all font-bold text-sm">
-            <GoogleIcon size={20} />
-            {isLogin ? "Log in with Google" : "Sign up with Google"}
-          </button>
-          
-          <div className="mt-8 text-center">
-            <button onClick={() => { setIsLogin(!isLogin); setAuthError(""); }} className="text-sm text-gray-500 hover:text-[#FFD700] transition-colors">{isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}</button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // 2. PROFESSIONAL DASHBOARD
-  // ==========================================
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#050505] text-black dark:text-white font-sans">
       
@@ -410,7 +89,6 @@ export default function Dashboard() {
           <span className="font-black text-lg">WALLYJAYTECH-MD</span>
         </div>
         
-        {/* Theme Toggle + Hamburger Menu */}
         <div className="flex items-center gap-2">
           {mounted && (
             <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 text-gray-600 dark:text-gray-300 hover:text-[#FFD700] dark:hover:text-[#FFD700] transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">
@@ -484,7 +162,6 @@ export default function Dashboard() {
 
       {/* DESKTOP SIDEBAR */}
       <aside className="w-72 bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex">
-        
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
@@ -538,7 +215,6 @@ export default function Dashboard() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#FFD700] opacity-5 blur-[120px] rounded-full pointer-events-none"></div>
 
         <div className="p-4 md:p-8 relative z-10 max-w-7xl mx-auto w-full">
-          
           <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -563,12 +239,10 @@ export default function Dashboard() {
           </header>
 
           <AnimatePresence mode="wait">
-            
             {/* OVERVIEW TAB */}
             {activeTab === 'dashboard' && (
               <motion.div key="dash" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-6">
                 
-                {/* Welcome Banner */}
                 <div className="relative bg-gradient-to-br from-black via-gray-900 to-black dark:from-[#111] dark:via-[#0a0a0a] dark:to-[#111] rounded-3xl p-6 md:p-8 overflow-hidden border border-gray-800 shadow-2xl">
                   <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD700] opacity-20 blur-[100px] rounded-full"></div>
                   <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#FFD700] opacity-10 blur-[80px] rounded-full"></div>
@@ -599,7 +273,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <StatCard title="Messages Handled" value="14,203" change="+12%" trend="up" icon={<MessageSquare size={22}/>} color="yellow" />
                   <StatCard title="Active Groups" value="32" change="+5%" trend="up" icon={<Users size={22}/>} color="blue" />
@@ -607,7 +280,6 @@ export default function Dashboard() {
                   <StatCard title="Server Uptime" value="99.9%" change="Stable" trend="neutral" icon={<Activity size={22}/>} color="green" />
                 </div>
 
-                {/* Charts Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
                     <div className="flex justify-between items-center mb-6">
@@ -647,7 +319,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Quick Actions */}
                 <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl">
                   <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
