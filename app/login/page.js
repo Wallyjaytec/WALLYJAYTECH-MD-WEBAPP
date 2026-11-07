@@ -52,7 +52,7 @@ function LoginForm() {
 
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error("Invalid email or password.");
       
       if (rememberMe) sessionStorage.setItem("remember_me", "true");
       else sessionStorage.setItem("remember_me", "false");
@@ -136,7 +136,7 @@ function LoginForm() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="relative">
             <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-            <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+            <input type="text" placeholder="Email or Username" value={email} onChange={e => setEmail(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
           </div>
 
           <div className="relative">
