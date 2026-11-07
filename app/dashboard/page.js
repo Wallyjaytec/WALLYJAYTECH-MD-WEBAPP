@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { supabase } from "../../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -11,7 +12,8 @@ import {
   User, Lock, Eye, EyeOff, Globe, Phone, X, ChevronDown,
   Users, Download, Power, RefreshCw, Key, Bell, TrendingUp, 
   ArrowUpRight, ArrowDownRight, Play, Terminal, Menu, 
-  CheckCircle, Clock, Send, BarChart3, Star, Crown, Sparkles
+  CheckCircle, Clock, Send, BarChart3, Star, Crown, Sparkles,
+  Sun, Moon
 } from "lucide-react";
 
 // --- SVG GOOGLE ICON ---
@@ -38,6 +40,8 @@ const countries = [
 
 export default function Dashboard() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -72,6 +76,8 @@ export default function Dashboard() {
     phone: '',
     country: ''
   });
+
+  useEffect(() => setMounted(true), []);
 
   // --- VALIDATION FUNCTIONS ---
   const validateUsername = (name) => /^[a-zA-Z]{5,}[0-9]*$/.test(name);
@@ -183,13 +189,12 @@ export default function Dashboard() {
   const handleForgotPassword = async () => {
     if (!email) return setAuthError("Please enter your email to reset password.");
     
-    // Redirects to /reset-password instead of /dashboard
     const { error } = await supabase.auth.resetPasswordForEmail(email, { 
       redirectTo: `${window.location.origin}/reset-password` 
     });
     
     if (error) setAuthError(error.message);
-    else setAuthError("Password reset link sent! Check your email.");
+    else setAuthError("If an account exists, a password reset link has been sent to your email.");
   };
 
   const checkAvailability = async () => {
@@ -273,7 +278,7 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
+  if (loading || !mounted) return <div className="h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">LOADING...</div>;
 
   // ==========================================
   // 1. AUTH SCREEN (Login/Signup)
@@ -291,7 +296,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-black text-black dark:text-white text-center mb-1 tracking-tight">WALLYJAYTECH-MD</h1>
           <p className="text-center text-[#FFD700] mb-8 text-xs font-mono tracking-widest uppercase">{isLogin ? "Login to your dashboard" : "Create your dashboard"}</p>
           
-          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.startsWith("Verify") || authError.startsWith("Password reset") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
+          {authError && <div className={`mb-4 p-3 border rounded-lg text-sm text-center ${authError.startsWith("Verify") || authError.startsWith("If an account exists") ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>{authError}</div>}
 
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
@@ -403,11 +408,20 @@ export default function Dashboard() {
       <div className="md:hidden fixed top-0 left-0 w-full bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 z-50 flex justify-between items-center px-4 py-3">
         <div className="flex items-center gap-2">
           <img src="/assets/images/web_logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-black p-0.5" />
-          <span className="font-black text-lg">WALLYJAY</span>
+          <span className="font-black text-lg">WALLYJAYTECH-MD</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors">
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        
+        {/* Theme Toggle + Hamburger Menu */}
+        <div className="flex items-center gap-2">
+          {mounted && (
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 text-gray-600 dark:text-gray-300 hover:text-[#FFD700] dark:hover:text-[#FFD700] transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">
+              {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+            </button>
+          )}
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors">
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* MOBILE MENU OVERLAY */}
@@ -421,7 +435,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
                   <div>
-                    <h1 className="font-black text-base">WALLYJAYTECH</h1>
+                    <h1 className="font-black text-base">WALLYJAYTECH-MD</h1>
                     <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">SAAS DASHBOARD</p>
                   </div>
                 </div>
@@ -476,7 +490,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <img src="/assets/images/web_logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain bg-black p-1" />
             <div>
-              <h1 className="font-black text-base tracking-tight">WALLYJAYTECH</h1>
+              <h1 className="font-black text-base tracking-tight">WALLYJAYTECH-MD</h1>
               <p className="text-[10px] text-[#FFD700] tracking-widest font-mono">SAAS DASHBOARD</p>
             </div>
           </div>
@@ -543,6 +557,11 @@ export default function Dashboard() {
                 <span className={`w-2 h-2 rounded-full ${settings.bot_connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
                 <span className="text-xs font-bold">{settings.bot_connected ? 'BOT ONLINE' : 'BOT OFFLINE'}</span>
               </div>
+              {mounted && (
+                <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-full bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
+                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+              )}
               <button className="p-2 rounded-full bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
                 <Bell size={18} />
               </button>
