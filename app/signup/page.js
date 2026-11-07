@@ -148,6 +148,7 @@ export default function Signup() {
 
   const handleGoogleSignup = async () => {
     try {
+      sessionStorage.setItem("oauth_flow", "true");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: `${window.location.origin}/dashboard` }
@@ -160,6 +161,7 @@ export default function Signup() {
 
   const handleGithubSignup = async () => {
     try {
+      sessionStorage.setItem("oauth_flow", "true");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: { redirectTo: `${window.location.origin}/dashboard` }
@@ -172,6 +174,7 @@ export default function Signup() {
 
   const handleDiscordSignup = async () => {
     try {
+      sessionStorage.setItem("oauth_flow", "true");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: { redirectTo: `${window.location.origin}/dashboard` }
