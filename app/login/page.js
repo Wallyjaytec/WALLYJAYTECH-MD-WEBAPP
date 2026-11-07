@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, X, CheckCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, X } from "lucide-react";
 
 const GoogleIcon = ({ size = 20, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 48 48" className={className}>
@@ -51,6 +51,20 @@ function LoginForm() {
       setError(err.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      if (error) throw new Error(error.message);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -114,7 +128,7 @@ function LoginForm() {
           <div className="flex-grow h-px bg-gray-200 dark:bg-gray-800"></div>
         </div>
 
-        <button className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-all font-bold text-sm">
+        <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-all font-bold text-sm">
           <GoogleIcon size={20} />
           Log in with Google
         </button>
