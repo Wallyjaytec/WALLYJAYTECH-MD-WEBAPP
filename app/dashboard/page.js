@@ -66,26 +66,36 @@ export default function Dashboard() {
       const { data: profile } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).maybeSingle();
       
       if (!profile || !profile.username) {
+        // Check if they are currently in the middle of an OAuth login
+        const isNewOauthSignup = sessionStorage.getItem('oauth_flow') === 'true';
+        
+        if (!isNewOauthSignup) {
+          // They are not in an OAuth flow, but they have no profile. They were deleted!
+          await supabase.auth.signOut({ scope: 'local' });
+          sessionStorage.clear();
+          localStorage.clear();
+          setSession(null);
+          setLoading(false);
+          window.location.href = '/';
+          return;
+        }
+
+        // They ARE in an OAuth flow, so it's a new user
+        sessionStorage.removeItem('oauth_flow'); // Clear the flag
         setNeedsProfile(true);
         
-        // Try to pre-fill from OAuth metadata
         const meta = session.user.user_metadata;
         if (meta) {
           const provider = session.user.app_metadata.provider;
-          
           if (provider === 'google') {
-            // Google provides full name
             const fullName = meta.full_name || meta.name || "";
             const nameParts = fullName.split(" ");
             setCompFirstName(nameParts[0] || "");
             setCompLastName(nameParts.slice(1).join(" ") || "");
           } else {
-            // GitHub and Discord provide username. Leave names blank so they can type it.
             setCompFirstName("");
             setCompLastName("");
           }
-
-          // Auto-fill username for GitHub/Discord if available
           if (meta.user_name || meta.preferred_username) {
             setCompUsername(meta.user_name || meta.preferred_username);
           }
