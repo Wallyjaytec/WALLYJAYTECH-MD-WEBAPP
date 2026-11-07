@@ -16,11 +16,15 @@ export default function ResetPassword() {
   useEffect(() => {
     let mounted = true;
 
-    const handleAuth = async () => {
-      // 1. Check if there is an error in the URL (e.g., expired link from Supabase)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const errorDescription = hashParams.get('error_description');
-      
+    const checkToken = async () => {
+      // 1. Supabase puts the secure token in the URL hash (#access_token=...)
+      // We extract it manually so the user is NOT auto-logged in globally.
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const errorDescription = params.get('error_description');
+
       if (errorDescription) {
         if (mounted) {
           setIsExpired(true);
@@ -29,48 +33,43 @@ export default function ResetPassword() {
         return;
       }
 
-      // 2. Wait a brief moment for Supabase to process the #access_token
-      setTimeout(async () => {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error || !session) {
+      if (accessToken) {
+        // 2. Manually set the session JUST for this page
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error || !data.session) {
           if (mounted) setIsExpired(true);
         } else {
-          // 3. THE 30-MINUTE EXPIRY CHECK
-          // Supabase gives us the exact time the link was generated.
-          const linkCreatedAt = new Date(session.user.updated_at || session.user.created_at).getTime();
+          // 3. Check if the link is older than 30 minutes
+          const linkCreatedAt = new Date(data.session.user.updated_at || data.session.user.created_at).getTime();
           const now = new Date().getTime();
           const minutesSinceCreation = (now - linkCreatedAt) / 1000 / 60;
 
           if (minutesSinceCreation > 30) {
-            // If more than 30 minutes have passed, expire it!
-            if (mounted) {
-              setIsExpired(true);
-              await supabase.auth.signOut();
-            }
+            if (mounted) setIsExpired(true);
           } else {
-            // Valid session, show the form
             if (mounted) setIsExpired(false);
           }
         }
-        if (mounted) setLoading(false);
-      }, 500); 
-    };
-
-    handleAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        if (mounted) {
-          setIsExpired(false);
-          setLoading(false);
+      } else {
+        // No token in URL. Check if they already have a valid session (e.g. refreshed page)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          if (mounted) setIsExpired(true);
+        } else {
+          if (mounted) setIsExpired(false);
         }
       }
-    });
+      if (mounted) setLoading(false);
+    };
+
+    checkToken();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
   }, []);
 
@@ -97,7 +96,7 @@ export default function ResetPassword() {
     } else {
       setMessage('Password updated successfully! Redirecting to login...');
       
-      // Log out of ALL devices so the old Chrome tab is kicked out
+      // Log out of ALL devices immediately. This kicks the original Chrome tab out!
       await supabase.auth.signOut({ scope: 'global' }); 
       
       setTimeout(() => {
