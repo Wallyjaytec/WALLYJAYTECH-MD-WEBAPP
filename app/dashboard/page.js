@@ -66,16 +66,29 @@ export default function Dashboard() {
       const { data: profile } = await supabase.from('user_settings').select('*').eq('user_id', session.user.id).maybeSingle();
       
       if (!profile || !profile.username) {
-        // User logged in via OAuth (Google/GitHub/Discord) and needs to complete profile
         setNeedsProfile(true);
         
-        // Try to pre-fill name from any provider (Google, GitHub, Discord)
+        // Try to pre-fill from OAuth metadata
         const meta = session.user.user_metadata;
         if (meta) {
-          const fullName = meta.full_name || meta.name || meta.user_name || meta.preferred_username || "";
-          const nameParts = fullName.split(" ");
-          setCompFirstName(nameParts[0] || "");
-          setCompLastName(nameParts.slice(1).join(" ") || "");
+          const provider = session.user.app_metadata.provider;
+          
+          if (provider === 'google') {
+            // Google provides full name
+            const fullName = meta.full_name || meta.name || "";
+            const nameParts = fullName.split(" ");
+            setCompFirstName(nameParts[0] || "");
+            setCompLastName(nameParts.slice(1).join(" ") || "");
+          } else {
+            // GitHub and Discord provide username. Leave names blank so they can type it.
+            setCompFirstName("");
+            setCompLastName("");
+          }
+
+          // Auto-fill username for GitHub/Discord if available
+          if (meta.user_name || meta.preferred_username) {
+            setCompUsername(meta.user_name || meta.preferred_username);
+          }
         }
       } else {
         setNeedsProfile(false);
@@ -191,7 +204,7 @@ export default function Dashboard() {
             
             <div className="relative">
               <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type="text" placeholder="Username (5+ letters)" value={compUsername} onChange={e => setCompUsername(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
+              <input type="text" placeholder="Username" value={compUsername} onChange={e => setCompUsername(e.target.value)} required className="w-full p-3 pl-10 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 text-black dark:text-white focus:border-[#FFD700] outline-none transition-colors" />
             </div>
 
             <div className="relative">
