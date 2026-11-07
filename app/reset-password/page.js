@@ -14,34 +14,31 @@ export default function ResetPassword() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if the user is actually authenticated via the email link
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session) {
-        setIsExpired(true);
+    // Listen to the auth state to see if the email link successfully logged them in
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        // The link is valid and they are logged in securely to reset their password
+        setIsExpired(false);
         setLoading(false);
-        return;
       }
+    });
 
-      // 30-Minute Expiry Check
-      // Supabase gives us the session createdAt time. We check if it's older than 30 mins.
-      const createdAt = new Date(session.user.created_at).getTime();
-      const now = new Date().getTime();
-      const thirtyMinutes = 30 * 60 * 1000;
-
-      // Note: If your Supabase project doesn't update created_at on login, 
-      // this will rely on the default 24h link expiry, but this adds an extra safety layer.
-      if (session.expires_at && (new Date(session.expires_at).getTime() < now)) {
-         setIsExpired(true);
-         setLoading(false);
-         return;
+    // Also check manually in case the event fired before this component loaded
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setIsExpired(false);
+      } else {
+        // If there is no session in the URL, the link is expired or already used
+        setIsExpired(true);
       }
-
       setLoading(false);
     };
 
     checkSession();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleUpdatePassword = async (e) => {
@@ -59,7 +56,6 @@ export default function ResetPassword() {
     setError('');
     setMessage('');
 
-    // 1. Update the user's password
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
@@ -68,10 +64,9 @@ export default function ResetPassword() {
     } else {
       setMessage('Password updated successfully! Redirecting to login...');
       
-      // 2. Log out of ALL devices (kills the session in the original Chrome tab)
+      // 2. THIS IS THE FIX: Log out of ALL devices (kills the session in the original Chrome tab)
       await supabase.auth.signOut({ scope: 'global' }); 
       
-      // 3. Send them to the dashboard login screen after 2 seconds
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
@@ -82,7 +77,6 @@ export default function ResetPassword() {
     return <div className="min-h-screen bg-white dark:bg-[#050505] text-[#FFD700] flex items-center justify-center font-bold animate-pulse">VERIFYING LINK...</div>;
   }
 
-  // ERROR SCREEN (Expired, used, or invalid link)
   if (isExpired) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#050505] p-4 font-sans">
@@ -102,7 +96,6 @@ export default function ResetPassword() {
     );
   }
 
-  // SUCCESS / RESET PASSWORD FORM
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#050505] p-4 font-sans">
       <div className="max-w-md w-full bg-white dark:bg-[#0a0a0a] rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-800">
