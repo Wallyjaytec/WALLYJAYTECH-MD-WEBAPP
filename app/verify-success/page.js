@@ -18,7 +18,6 @@ export default function VerifySuccess() {
     if (hasVerified) {
       setIsAlreadyVerified(true);
     } else {
-      // Set the flag so if they click the link again, it knows!
       localStorage.setItem("email_verified", "true");
     }
 
@@ -26,16 +25,20 @@ export default function VerifySuccess() {
     const clearSession = async () => {
       await supabase.auth.signOut({ scope: 'local' });
       sessionStorage.clear();
-      // Do NOT clear localStorage, we need the flag to stay!
     };
     clearSession();
 
-    // 3. Start a 5-second countdown to redirect
+    // 3. Start a 5-second countdown
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push("/login?message=Account verified successfully! Please log in to proceed.");
+          // REDIRECT TO LANDING PAGE (/) if already verified, otherwise login
+          if (hasVerified) {
+            router.push("/");
+          } else {
+            router.push("/login?message=Account verified successfully! Please log in to proceed.");
+          }
         }
         return prev - 1;
       });
@@ -60,7 +63,7 @@ export default function VerifySuccess() {
             </div>
             <h1 className="text-2xl font-black text-black dark:text-white mb-2 tracking-tight">Already Verified</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-8">
-              This email link was already used. Your account is active.
+              This email link was already used. Returning to home...
             </p>
           </>
         ) : (
@@ -79,7 +82,7 @@ export default function VerifySuccess() {
 
         <div className="flex flex-col items-center gap-3 text-sm font-medium text-[#FFD700]">
           <Loader2 className="animate-spin" size={24} />
-          <span>Redirecting to login in {countdown} seconds...</span>
+          <span>Redirecting in {countdown} seconds...</span>
         </div>
       </motion.div>
     </div>
